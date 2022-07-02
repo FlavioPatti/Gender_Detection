@@ -12,16 +12,18 @@ from Generative_Models import TiedNaiveBayes
 from Logistic_Regression import LinearLogisticRegression
 from Logistic_Regression import QuadraticLogisticRegression
 from Bayes_Decision_Model_Evaluation import BayesDecision
+from Preprocessing import Gaussianization
 
 
-FLAG_SHOW_FIGURES = 0
+
+FLAG_SHOW_FIGURES = 1
 FLAG_PCA = 0
 FLAG_LDA = 0
 FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 0
-FLAG_BAYES_DECISION = 1
+FLAG_BAYES_DECISION = 0
 
 def vcol(v):
     return v.reshape((v.size,1))
@@ -63,11 +65,16 @@ if __name__ == '__main__':
     #carico i dati
     DTR, LTR, DTE, LTE = load_train_and_test();
     #print(DTR, LTR)
-    print("Campioni totali del dataset: ", DTR.shape[1] )
+    print("Total sample of training set: ", DTR.shape[1] )
+    print("Total sample of test set: ", DTE.shape[1] )
     sample_class0 = (LTR==0).sum()
-    print("Campioni classe 0: ", sample_class0)
+    print("Sample of class 0: ", sample_class0)
     sample_class1 = (LTR==1).sum()
-    print("Campioni classe 1: ", sample_class1, "\n")
+    print("Sample of class 1: ", sample_class1, "\n")
+    DTR0=DTR[:,LTR==0]
+    DTR1=DTR[:,LTR==1]
+    print(DTR0.shape)
+    print(DTR1.shape)
     
     hFea = {
         0: 'Fixed Acidity',
@@ -82,10 +89,23 @@ if __name__ == '__main__':
         9: 'Sulphates',
         10: 'Alcohol'
         }
+    # 3 applications: main balanced one and two unbalanced
+    applications = [[0.5, 1, 1], [0.1, 1, 1], [0.9, 1, 1]]
     
     if FLAG_SHOW_FIGURES:
-        graphics.plot_hist(DTR, LTR, hFea)
-        graphics.plot_scatter(DTR, LTR, hFea)
+        #graphics.plot_hist(DTR, LTR, hFea)
+        #graphics.plot_scatter(DTR, LTR, hFea)
+        DTR_gauss = Gaussianization.compute_ranking(DTR);
+        print("dimensione DTR gauss")
+        print(DTR_gauss.shape)
+        DTE_gauss= Gaussianization.compute_ranking(DTE);
+        print("dimensione DTE gauss")
+        print(DTE_gauss.shape)
+        graphics.plot_hist(DTR_gauss, LTR, hFea, "gauss");
+        graphics.plot_hist(DTE_gauss, LTE, hFea, "DTE_gauss");
+       #graphics.plot_heatmap(DTR0, "bad_wines_correlation");
+       #graphics.plot_heatmap(DTR1, "good_wines_correlation");
+       #graphics.plot_heatmap(DTR, "global_correlation");
 
     
     if FLAG_PCA:
