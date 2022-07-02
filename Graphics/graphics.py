@@ -1,7 +1,8 @@
 import numpy
 import matplotlib.pyplot as plt
+from numpy.lib.function_base import corrcoef
 
-def plot_hist(D, L, hFea):
+def plot_hist(D, L, hFea, save_name=""):
     
     D0 = D[:, L==0] 
     D1 = D[:, L==1] 
@@ -14,7 +15,7 @@ def plot_hist(D, L, hFea):
         
         plt.legend()
         plt.tight_layout() # Use with non-default font size to keep axis label inside the figure
-        plt.savefig('Graphics/Generated_figures/hist_%d.jpg' % dIdx, format='jpg')
+        plt.savefig('Graphics/Generated_figures/Histograms/hist_%d%s.jpg' % (dIdx, save_name), format='jpg')
     plt.show()
 
 def plot_scatter(D, L, hFea):
@@ -34,5 +35,12 @@ def plot_scatter(D, L, hFea):
         
             plt.legend()
             plt.tight_layout() # Use with non-default font size to keep axis label inside the figure
-            plt.savefig('Graphics/Generated_figures/scatter_%d_%d.jpg' % (dIdx1, dIdx2), format='jpg')
+            plt.savefig('Graphics/Generated_figures/Scatters/scatter_%d_%d.jpg' % (dIdx1, dIdx2), format='jpg')
         plt.show()
+
+def plot_heatmap(D, save_name):
+    pearson_matrix = corrcoef(D)
+    plt.imshow(pearson_matrix, cmap='Purples')
+    plt.savefig('Graphics/Generated_figures/Correlations/%s.jpg' % (save_name))
+    plt.show()
+    return pearson_matrix
