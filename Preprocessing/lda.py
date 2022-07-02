@@ -35,14 +35,5 @@ def LDA(D, L, m):
     W = U[:, ::-1][:, 0:m]
     
     DW = numpy.dot(W.T, D)
-    DW_0 = DW[:, L==0]
-    DW_1 = DW[:, L==1]
     
-    
-    plt.figure()
-    plt.title('LDA')
-    plt.scatter(DW_0[0], DW_0[1], label = "BAD WINES")
-    plt.scatter(DW_1[0], DW_1[1], label = "GOOD WINES")
-    plt.legend()
-    plt.show()
-    return DW_0, DW_1
+    return DW
