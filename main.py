@@ -11,6 +11,9 @@ from Generative_Models import TiedGaussianClassifier
 from Generative_Models import TiedNaiveBayes
 from Logistic_Regression import LinearLogisticRegression
 from Logistic_Regression import QuadraticLogisticRegression
+from SVM import LinearSVM
+from SVM import KernelSVM
+from GMM import gmm
 from Bayes_Decision_Model_Evaluation import BayesDecision
 from Preprocessing import Gaussianization
 
@@ -22,10 +25,12 @@ FLAG_KFOLD=0
 FLAG_SHOW_FIGURES = 0
 FLAG_PCA = 0
 FLAG_LDA = 0
-FLAG_MVG = 1
+FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 0
+FLAG_SVM=0
+FLAG_GMM=0
 FLAG_BAYES_DECISION = 0
 
 def vcol(v):
@@ -154,10 +159,39 @@ if __name__ == '__main__':
             if FLAG_LOGISTIC:
                 LinearLogisticRegression.LinearLogisticRegression(DTR_T, LTR_T, DTR_V, LTR_V)
                 QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_T, LTR_T, DTR_V, LTR_V)
+
+            if FLAG_SVM:
+                K_list = [1, 10];
+                C_list = [0.1, 1.0, 10.0];
+                for K in K_list:
+                    for C in C_list:
+                        print("SVM Linear: K = %f, C = %f" % (K,C), "\n")
+                        LinearSVM.train_SVM_linear(DTR_T,LTR_T, DTR_V, LTR_V, K,C);   
+                c_list = [0, 1]
+                for K in K_list:
+                    for C in C_list:
+                        for c in c_list:
+                            print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K,C,c), "\n")
+                            KernelSVM.svm_kernel_polynomial(DTR_T,LTR_T, DTR_V, K, C, d=2, c=c);          
+                g_list = [1,10]
+                for K in K_list:
+                    for C in C_list:
+                        for g in g_list:
+                            print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K,C,g), "\n")
+                            KernelSVM.svm_kernel_RBF(DTR_T,LTR_T, DTR_V, K, C, g= g);
+                
+            if FLAG_GMM:
+                psi = 0.01
+                M_list = [2, 4, 8]
+                versions = ["full", "diagonal", "tied"]
+                for version in versions:
+                    for M in M_list:
+                        print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
+                        gmm.GMM_classifier(DTR_T, LTR_T, DTR_V, M, psi, version = version)
                 
             if FLAG_BAYES_DECISION:
                 BayesDecision.BayesDecision(DTR_T, LTR_T, DTR_V, LTR_V)
-                
+
     if FLAG_TESTING:
         if FLAG_SHOW_FIGURES:
             graphics.plot_hist(DTR, LTR, hFea)
@@ -203,7 +237,36 @@ if __name__ == '__main__':
         if FLAG_LOGISTIC:
             LinearLogisticRegression.LinearLogisticRegression(DTR, LTR, DTE, LTE)
             QuadraticLogisticRegression.QuadraticLogisticRegression(DTR, LTR, DTE, LTE)
+
+        if FLAG_SVM:
+            K_list = [1, 10];
+            C_list = [0.1, 1.0, 10.0];
+            for K in K_list:
+                for C in C_list:
+                    print("SVM Linear: K = %f, C = %f" % (K,C), "\n")
+                    LinearSVM.train_SVM_linear(DTR,LTR, DTE, LTE, K,C);   
+            c_list = [0, 1]
+            for K in K_list:
+                for C in C_list:
+                    for c in c_list:
+                        print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K,C,c), "\n")
+                        KernelSVM.svm_kernel_polynomial(DTR,LTR, DTE, K, C, d=2, c=c);          
+            g_list = [1,10]
+            for K in K_list:
+                for C in C_list:
+                    for g in g_list:
+                        print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K,C,g), "\n")
+                        KernelSVM.svm_kernel_RBF(DTR,LTR, DTE, K, C, g= g);
             
+        if FLAG_GMM:
+            psi = 0.01
+            M_list = [2, 4, 8]
+            versions = ["full", "diagonal", "tied"]
+            for version in versions:
+                for M in M_list:
+                    print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
+                    gmm.GMM_classifier(DTR, LTR, DTE, M, psi, version = version)
+                
         if FLAG_BAYES_DECISION:
             BayesDecision.BayesDecision(DTR, LTR, DTE, LTE)
     
