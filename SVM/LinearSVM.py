@@ -8,7 +8,7 @@ def mcol(v):
 def mrow(v):
     return v.reshape((1,v.size))
 
-def train_SVM_linear(DTR, LTR, DTE, LTE, C, K):
+def train_SVM_linear(DTR, LTR, DTE, C, K):
     DTREXT = numpy.vstack([DTR, K* numpy.ones((1,DTR.shape[1] ))])
     
     Z = numpy.zeros(LTR.shape)
@@ -51,19 +51,6 @@ def train_SVM_linear(DTR, LTR, DTE, LTE, C, K):
     DTEEXT = numpy.vstack([DTE, K* numpy.ones((1,DTE.shape[1] ))])    
      
     S1 = numpy.dot(wStar.T, DTEEXT);
-        
-    LP = S1>0
-    LP = numpy.hstack(mrow(LP))
-        
-    accuracy = 0
-    for i in range(LTE.shape[0]):
-        if(LP[i]==LTE[i]):
-            accuracy+=1
-                
-    accuracy = accuracy / DTE.shape[1]
-    errore = 1 - accuracy
-    
-    print("Errore: ", 100*errore)
     
     return S1
 

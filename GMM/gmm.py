@@ -262,7 +262,7 @@ def LBG_algorithm(X, gmm=None, goal_components=None, alpha=0.1, psi=0.01, printD
     return gmm
 
 
-def GMM_classifier(DTR, LTR, DTE, LTE,  M, psi, version="full"):
+def GMM_classifier(DTR, LTR, DTE,  M, psi, version="full"):
     """ Implementation of the GMM classifier for binary classification """
 
     DTR0 = DTR[:, LTR == 0]
