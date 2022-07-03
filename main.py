@@ -28,9 +28,9 @@ FLAG_LDA = 0
 FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
-FLAG_LOGISTIC = 0
+FLAG_LOGISTIC = 1
 FLAG_SVM= 0
-FLAG_GMM=1
+FLAG_GMM=0 
 FLAG_BAYES_DECISION = 0
 
 def vcol(v):
@@ -165,8 +165,6 @@ if __name__ == '__main__':
         9: 'Sulphates',
         10: 'Alcohol'
         }
-    # 3 applications: main balanced one and two unbalanced
-    applications = [[0.5, 1, 1], [0.1, 1, 1], [0.9, 1, 1]]
     
     DTR0=DTR[:,LTR==0]
     DTR1=DTR[:,LTR==1]
@@ -259,83 +257,87 @@ if __name__ == '__main__':
             
         K = 5;
         if FLAG_KFOLD: 
+             # 3 applications: main balanced one and two unbalanced
+            applications = [[0.5, 1, 1], [0.1, 1, 1], [0.9, 1, 1]]
+            for app in applications:
+                pi1, Cfn, Cfp = app
+                print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
             
-            if FLAG_MVG:
-                print("mvg")
-                all_llr, all_labels = k_fold(DTR, LTR, K, MultivariateGaussianClassifier.MultivariateGaussianClassifier)
-                print("llr: ", all_llr)
-                print("label: ", all_labels)
+                if FLAG_MVG:
+                    print("mvg")
+                    all_llrs, all_labels = k_fold(DTR, LTR, K, MultivariateGaussianClassifier.MultivariateGaussianClassifier)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print(DCF_min)
+                    
+                if FLAG_NAIVE:
+                    print("naive")
+                    all_llrs, all_labels = k_fold(DTR, LTR, K, NaiveBayesClassifier.NaiveBayesClassifier)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print(DCF_min)
 
-            if FLAG_NAIVE:
-                print("naive")
-                all_llr, all_labels = k_fold(DTR, LTR, K, NaiveBayesClassifier.NaiveBayesClassifier)
-                print("llr: ", all_llr)
-                print("label: ", all_labels)
-
-            if FLAG_TIED:
-                print("tied gaussian")
-                all_llr, all_labels = k_fold(DTR, LTR, K,  TiedGaussianClassifier.TiedGaussianClassifier)
-                print("llr: ", all_llr)
-                print("label: ", all_labels)
-                
-                print("tied naive")
-                all_llr, all_labels = k_fold(DTR, LTR, K,  TiedNaiveBayes.TiedNaiveBayes)
-                print("llr: ", all_llr)
-                print("label: ", all_labels)
-
-            if FLAG_LOGISTIC:
-                lambda_list = [0., 1e-6, 1e-3, 1.]
-                for l in lambda_list:
-                    print(" linear logistic regression with lamb ", l)
-                    all_llr, all_labels = k_fold(DTR, LTR, K, LinearLogisticRegression.LinearLogisticRegression, (l,))
-                    print("llr: ", all_llr)
-                    print("label: ", all_labels)
-            
-                    print(" quadratic logistic regression with lamb ", l)
-                    all_llr, all_labels = k_fold(DTR, LTR, K,  QuadraticLogisticRegression.QuadraticLogisticRegression, (l,))
-                    print("llr: ", all_llr)
-                    print("label: ", all_labels)
-
-            if FLAG_SVM:
-            
-                K_list = [1, 10];
-                C_list = [0.1, 1.0, 10.0];
-                for K_ in K_list:
-                    for C in C_list:
-                        print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
-                       # all_llr, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, (K_,C) )   
-           
-                K_list = [1, 10]
-                C_list = [0.1, 1.0, 10.0]       
-                c_list = [0, 1]
-                for K_ in K_list:
-                    for C in C_list:
-                        for c in c_list:
-                            print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
-                            #all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, c) );   
-                            
-                K_list = [1, 10]
-                C_list = [0.1, 1.0, 10.0]                 
-                g_list = [1,10]
-                for K_ in K_list:
-                    for C in C_list:
-                        for g in g_list:
-                            print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
-                            all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g) ) ;
+                if FLAG_TIED:
+                    print("tied gaussian")
+                    all_llrs, all_labels = k_fold(DTR, LTR, K,  TiedGaussianClassifier.TiedGaussianClassifier)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print(DCF_min)
                           
+                    print("tied naive")
+                    all_llrs, all_labels = k_fold(DTR, LTR, K,  TiedNaiveBayes.TiedNaiveBayes)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print(DCF_min)
+
+                if FLAG_LOGISTIC:
+                    lambda_list = [0., 1e-6, 1e-3, 1.]
+                    for l in lambda_list:
+                        print(" linear logistic regression with lamb ", l)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K, LinearLogisticRegression.LinearLogisticRegression, (l,))
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        print(DCF_min)
                 
-            if FLAG_GMM:
-                psi = 0.01
-                M_list = [2, 4, 8]
-                versions = ["full", "diagonal", "tied"]
-                for version in versions:
-                    for M in M_list:
-                        print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
-                        all_llr, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, (M, psi, version) )
+                        print(" quadratic logistic regression with lamb ", l)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K,  QuadraticLogisticRegression.QuadraticLogisticRegression, (l,))
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        print(DCF_min)
+
+                if FLAG_SVM:
                 
-            if FLAG_BAYES_DECISION:
-                BayesDecision.BayesDecision(DTR_T, LTR_T, DTR_V, LTR_V)
-                 
+                    K_list = [1, 10];
+                    C_list = [0.1, 1.0, 10.0];
+                    for K_ in K_list:
+                        for C in C_list:
+                            print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
+                        # all_llr, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, (K_,C) )   
+            
+                    K_list = [1, 10]
+                    C_list = [0.1, 1.0, 10.0]       
+                    c_list = [0, 1]
+                    for K_ in K_list:
+                        for C in C_list:
+                            for c in c_list:
+                                print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
+                                #all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, c) );   
+                                
+                    K_list = [1, 10]
+                    C_list = [0.1, 1.0, 10.0]                 
+                    g_list = [1,10]
+                    for K_ in K_list:
+                        for C in C_list:
+                            for g in g_list:
+                                print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
+                                all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g) ) ;
+                            
+                    
+                if FLAG_GMM:
+                    psi = 0.01
+                    M_list = [2, 4, 8]
+                    versions = ["full", "diagonal", "tied"]
+                    for version in versions:
+                        for M in M_list:
+                            print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
+                            all_llr, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, (M, psi, version) )
+                    
+        
+                    
 
     if FLAG_TESTING:
         if FLAG_MVG:
