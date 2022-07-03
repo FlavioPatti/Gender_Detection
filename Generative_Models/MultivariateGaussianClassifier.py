@@ -16,6 +16,23 @@ def ML_GAU(D):
     C = numpy.dot(D-mu, (D-mu).T)/float(D.shape[1])
     return mu, C
 
+def compute_llrs(DTR, DTE, LTR, LTE):
+    h = {}
+
+    for lab in [0,1]:
+    
+      mu, C = ML_GAU(DTR[:, LTR==lab]) 
+      h[lab] = (mu, C)
+    
+    llrs = numpy.zeros((2,DTE.shape[1])) 
+
+    for lab in [0,1]:
+        mu, C = h[lab]
+        llrs[lab, :] = numpy.exp(logpdf_GAU_ND(DTE,mu, C).ravel())
+        
+    llrs = numpy.log(llrs[1]/llrs[0])
+    return llrs
+
 def MultivariateGaussianClassifier(DTrain, LTrain, DTest, LTest):
     
     #Multivariate Gaussian Classifier (MVG): il classificatore presuppone che i campioni di ciascuna classe c ∈ {0, 1} 
@@ -81,5 +98,7 @@ def MultivariateGaussianClassifier(DTrain, LTrain, DTest, LTest):
     print("Error for the Multivariate Gaussian Classifier: ")
     print("%.2f\n" % (100* errore) )
     
-    return Lpred2
+    #for minDCF
+    llrs = compute_llrs(DTrain, DTest, LTrain, LTest)
+    return llrs
  

@@ -20,8 +20,8 @@ from Preprocessing import Gaussianization
 
 FLAG_TRAINING=1
 FLAG_TESTING=0
-FLAG_SINGLEFOLD=1
-FLAG_KFOLD=0
+FLAG_SINGLEFOLD=0
+FLAG_KFOLD=1
 FLAG_SHOW_FIGURES = 0
 FLAG_PCA = 0
 FLAG_LDA = 0
@@ -29,8 +29,8 @@ FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 0
-FLAG_SVM=0
-FLAG_GMM=0
+FLAG_SVM= 0
+FLAG_GMM=1
 FLAG_BAYES_DECISION = 0
 
 def vcol(v):
@@ -122,9 +122,9 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
         # calculate scores
         if params is not None:
-            llr = algorithm(DTR, LTR, DTE, *params)
+            llr = algorithm(DTR, LTR, DTE, LTE, *params)
         else:
-            llr = algorithm(DTR, LTR, DTE)
+            llr = algorithm(DTR, LTR, DTE, LTE)
 
         # add scores and labels for this fold in total
         all_llr.append(llr)
@@ -132,6 +132,8 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
     all_llr = numpy.hstack(all_llr)
     all_labels = numpy.hstack(all_labels)
+    print(all_llr.shape)
+    print(all_labels.shape)
 
     # if algorithm == logistic_regression:
     # We can recover log-likelihood ratios by subtracting from the score s
@@ -139,7 +141,7 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
     #all_llr = all_llr - log(pi1/ (1-pi1))
 
     #DCF_min = minimum_detection_cost(all_llr, all_labels, pi1, Cfn, Cfp)
-
+    
     return all_llr, all_labels
 
 
@@ -251,6 +253,85 @@ if __name__ == '__main__':
                     for M in M_list:
                         print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
                         gmm.GMM_classifier(DTR_T, LTR_T, DTR_V, M, psi, version = version)
+                
+            if FLAG_BAYES_DECISION:
+                BayesDecision.BayesDecision(DTR_T, LTR_T, DTR_V, LTR_V)
+            
+        K = 5;
+        if FLAG_KFOLD: 
+            
+            if FLAG_MVG:
+                print("mvg")
+                all_llr, all_labels = k_fold(DTR, LTR, K, MultivariateGaussianClassifier.MultivariateGaussianClassifier)
+                print("llr: ", all_llr)
+                print("label: ", all_labels)
+
+            if FLAG_NAIVE:
+                print("naive")
+                all_llr, all_labels = k_fold(DTR, LTR, K, NaiveBayesClassifier.NaiveBayesClassifier)
+                print("llr: ", all_llr)
+                print("label: ", all_labels)
+
+            if FLAG_TIED:
+                print("tied gaussian")
+                all_llr, all_labels = k_fold(DTR, LTR, K,  TiedGaussianClassifier.TiedGaussianClassifier)
+                print("llr: ", all_llr)
+                print("label: ", all_labels)
+                
+                print("tied naive")
+                all_llr, all_labels = k_fold(DTR, LTR, K,  TiedNaiveBayes.TiedNaiveBayes)
+                print("llr: ", all_llr)
+                print("label: ", all_labels)
+
+            if FLAG_LOGISTIC:
+                lambda_list = [0., 1e-6, 1e-3, 1.]
+                for l in lambda_list:
+                    print(" linear logistic regression with lamb ", l)
+                    all_llr, all_labels = k_fold(DTR, LTR, K, LinearLogisticRegression.LinearLogisticRegression, (l,))
+                    print("llr: ", all_llr)
+                    print("label: ", all_labels)
+            
+                    print(" quadratic logistic regression with lamb ", l)
+                    all_llr, all_labels = k_fold(DTR, LTR, K,  QuadraticLogisticRegression.QuadraticLogisticRegression, (l,))
+                    print("llr: ", all_llr)
+                    print("label: ", all_labels)
+
+            if FLAG_SVM:
+            
+                K_list = [1, 10];
+                C_list = [0.1, 1.0, 10.0];
+                for K_ in K_list:
+                    for C in C_list:
+                        print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
+                       # all_llr, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, (K_,C) )   
+           
+                K_list = [1, 10]
+                C_list = [0.1, 1.0, 10.0]       
+                c_list = [0, 1]
+                for K_ in K_list:
+                    for C in C_list:
+                        for c in c_list:
+                            print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
+                            #all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, c) );   
+                            
+                K_list = [1, 10]
+                C_list = [0.1, 1.0, 10.0]                 
+                g_list = [1,10]
+                for K_ in K_list:
+                    for C in C_list:
+                        for g in g_list:
+                            print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
+                            all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g) ) ;
+                          
+                
+            if FLAG_GMM:
+                psi = 0.01
+                M_list = [2, 4, 8]
+                versions = ["full", "diagonal", "tied"]
+                for version in versions:
+                    for M in M_list:
+                        print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
+                        all_llr, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, (M, psi, version) )
                 
             if FLAG_BAYES_DECISION:
                 BayesDecision.BayesDecision(DTR_T, LTR_T, DTR_V, LTR_V)

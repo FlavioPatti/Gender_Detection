@@ -48,12 +48,6 @@ def vrow(x):
     return x.reshape(1, x.shape[0])
 
 
-def mcol(x):
-    """ Reshape row vector into col vector: (1, N) -> (N, 1)"""
-    # return x.reshape(x.shape[1], 1)
-    return x.reshape((x.size, 1))
-
-
 def logpdf_GMM(X, gmm):
     """ Computes the log-density of a gmm for a set of samples contained in 
         matrix X
@@ -268,7 +262,7 @@ def LBG_algorithm(X, gmm=None, goal_components=None, alpha=0.1, psi=0.01, printD
     return gmm
 
 
-def GMM_classifier(DTR, LTR, DTE,  M, psi, version="full"):
+def GMM_classifier(DTR, LTR, DTE, LTE,  M, psi, version="full"):
     """ Implementation of the GMM classifier for binary classification """
 
     DTR0 = DTR[:, LTR == 0]
@@ -281,7 +275,5 @@ def GMM_classifier(DTR, LTR, DTE,  M, psi, version="full"):
 
     S0 = logpdf_GMM(DTE, gmm0)
     S1 = logpdf_GMM(DTE, gmm1)
-    
-    print(S1-S0)
 
     return S1 - S0

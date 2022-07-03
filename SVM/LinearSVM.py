@@ -64,5 +64,7 @@ def train_SVM_linear(DTR, LTR, DTE, LTE, C, K):
     errore = 1 - accuracy
     
     print("Errore: ", 100*errore)
+    
+    return S1
 
     
