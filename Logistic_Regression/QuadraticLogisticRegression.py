@@ -26,7 +26,7 @@ def logreg_obj_wrap(DTR, LTR, l):
     return logreg_obj #non chiamo la funzione ma la torno soltanto, la chiamerà al suo interno fmin_l_bfgs_b
 
 
-def QuadraticLogisticRegression(DTR, LTR, DTE, LTE, l): 
+def QuadraticLogisticRegression(DTR, LTR, DTE, l): 
     
     #estensione dello spazio
     DTR_exp = []
@@ -55,20 +55,6 @@ def QuadraticLogisticRegression(DTR, LTR, DTE, LTE, l):
     _w = _v[0:DTR_exp.shape[0]]
     _b = _v[-1]
     S = numpy.dot(_w.T, DTE_exp) + _b 
-    LP = S>0
-    
-    accuracy = 0
-    for i in range(LTE.shape[0]):
-        if(LP[i]==LTE[i]):
-            accuracy+=1
-            
-    accuracy = accuracy / DTE_exp.shape[1]
-    errore = 1 - accuracy
-    
-    print("Accuracy for the Quadratic Logistic Regression: ")
-    print("%.2f" % (100*accuracy) )
-    print("Error for the Quadratic Logistic Regression: ")
-    print("%.2f\n" % (100*errore) )
 
     return S
         

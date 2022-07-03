@@ -33,7 +33,7 @@ def logreg_obj_wrap(DTR, LTR, l):
         return cxe + 0.5*l*numpy.linalg.norm(w)**2
     return logreg_obj #non chiamo la funzione ma la torno soltanto, la chiamerà al suo interno fmin_l_bfgs_b
 
-def LinearLogisticRegression(DTR,LTR, DTE, LTE, lamb):
+def LinearLogisticRegression(DTR,LTR, DTE, lamb):
     
         logreg_obj = logreg_obj_wrap(DTR, LTR, lamb)
         _v, _J, _d = scipy.optimize.fmin_l_bfgs_b(logreg_obj, numpy.zeros(DTR.shape[0]+1), approx_grad=True)
@@ -41,19 +41,6 @@ def LinearLogisticRegression(DTR,LTR, DTE, LTE, lamb):
         _w = _v[0:DTR.shape[0]]
         _b = _v[-1]
         S = numpy.dot(_w.T, DTE) + _b
-        LP = S>0
-        accuracy = 0
-        for i in range(LTE.shape[0]):
-            if(LP[i]==LTE[i]):
-                accuracy+=1
-                
-        accuracy = accuracy / DTE.shape[1]
-        error = 1 - accuracy
-        
-        print("Accuracy for the Linear Logistic Regression: ")
-        print("%.2f" % (100*accuracy) )
-        print("Error for the Linear Logistic Regression: ")
-        print("%.2f\n" % (100*error) )
-        
+
         return S
 

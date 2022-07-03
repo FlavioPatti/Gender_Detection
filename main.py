@@ -122,9 +122,9 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
         # calculate scores
         if params is not None:
-            llr = algorithm(DTR, LTR, DTE, LTE, *params)
+            llr = algorithm(DTR, LTR, DTE, *params)
         else:
-            llr = algorithm(DTR, LTR, DTE, LTE)
+            llr = algorithm(DTR, LTR, DTE)
 
         # add scores and labels for this fold in total
         all_llr.append(llr)
