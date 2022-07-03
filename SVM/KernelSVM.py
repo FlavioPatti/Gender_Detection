@@ -69,7 +69,7 @@ def svm_dual_kernel_wrapper(DTR, LTR, kernel, K, c, d, gamma):
 
 
 
-def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0):
+def svm_kernel_polynomial(DTR, LTR, DTE, LTE, K, C, c, d=2):
     """ Implementation of the svm classifier using polynomial kernel function """
     N = DTR.shape[1]
     # starting point
@@ -94,12 +94,11 @@ def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0):
                     (polynomial_kernel(DTR.T[i], DTE.T[t], c, d, 0) + K**2)
     # + K^2 (=Xi) for regularized bias in non-linear svm version
     
-    print("Score with poly: ", S.reshape(S.size,).shape)
     return S.reshape(S.size,)
 
 
 
-def svm_kernel_RBF(DTR, LTR, DTE, K, C, g):
+def svm_kernel_RBF(DTR, LTR, DTE, LTE, K, C, g):
     """ Implementation of the svm classifier using RBF kernel function """
     N = DTR.shape[1]
     # starting point
@@ -122,5 +121,4 @@ def svm_kernel_RBF(DTR, LTR, DTE, K, C, g):
                 S[t] += mcol(x)[i] * z[i] * (RBF_kernel(mcol(DTR.T[i]),
                                                         mcol(DTE.T[t]), 0, 0, g) + K**2)
     # + K^2 (=Xi) for regularized bias in non-linear svm version
-    print("Score with rbf: ", S.reshape(S.size,))
     return S.reshape(S.size,)
