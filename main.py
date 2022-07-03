@@ -28,9 +28,9 @@ FLAG_LDA = 0
 FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
-FLAG_LOGISTIC = 1
+FLAG_LOGISTIC = 0
 FLAG_SVM= 0
-FLAG_GMM=0 
+FLAG_GMM= 1
 FLAG_BAYES_DECISION = 0
 
 def vcol(v):
@@ -122,7 +122,9 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
         # calculate scores
         if params is not None:
+            print("inizio algoritmo")
             llr = algorithm(DTR, LTR, DTE, *params)
+            print("fine algoritmo")
         else:
             llr = algorithm(DTR, LTR, DTE)
 
@@ -132,8 +134,6 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
     all_llr = numpy.hstack(all_llr)
     all_labels = numpy.hstack(all_labels)
-    print(all_llr.shape)
-    print(all_labels.shape)
 
     # if algorithm == logistic_regression:
     # We can recover log-likelihood ratios by subtracting from the score s
@@ -192,8 +192,8 @@ if __name__ == '__main__':
         print("PCA dimensionality: ",DTR.shape)
 
     if FLAG_LDA:
-        DTR=lda.LDA(DTR, LTR, 3)
-        DTE=lda.LDA(DTE, LTE, 3)
+        DTR=lda.LDA(DTR, LTR, 1)
+        DTE=lda.LDA(DTE, LTE, 1)
         print("LDA dimensionality: ",DTR.shape)
 
     if FLAG_PCA & FLAG_LDA:
@@ -255,7 +255,7 @@ if __name__ == '__main__':
             if FLAG_BAYES_DECISION:
                 BayesDecision.BayesDecision(DTR_T, LTR_T, DTR_V, LTR_V)
             
-        K = 5;
+        K = 2;
         if FLAG_KFOLD: 
              # 3 applications: main balanced one and two unbalanced
             applications = [[0.5, 1, 1], [0.1, 1, 1], [0.9, 1, 1]]
@@ -300,14 +300,16 @@ if __name__ == '__main__':
                         print(DCF_min)
 
                 if FLAG_SVM:
-                
+                    
                     K_list = [1, 10];
                     C_list = [0.1, 1.0, 10.0];
                     for K_ in K_list:
                         for C in C_list:
                             print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
-                        # all_llr, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, (K_,C) )   
-            
+                            all_llrs, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, (K_,C) )  
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            print(DCF_min) 
+                     
                     K_list = [1, 10]
                     C_list = [0.1, 1.0, 10.0]       
                     c_list = [0, 1]
@@ -315,8 +317,11 @@ if __name__ == '__main__':
                         for C in C_list:
                             for c in c_list:
                                 print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
-                                #all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, c) );   
-                                
+                                all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, 2, c) )
+                                print(all_llrs, all_labels)
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                print(DCF_min)  
+                           
                     K_list = [1, 10]
                     C_list = [0.1, 1.0, 10.0]                 
                     g_list = [1,10]
@@ -324,7 +329,9 @@ if __name__ == '__main__':
                         for C in C_list:
                             for g in g_list:
                                 print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
-                                all_llr, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g) ) ;
+                                all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g) )
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                print(DCF_min) 
                             
                     
                 if FLAG_GMM:
@@ -334,8 +341,9 @@ if __name__ == '__main__':
                     for version in versions:
                         for M in M_list:
                             print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
-                            all_llr, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, (M, psi, version) )
-                    
+                            all_llrs, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, (M, psi, version) )
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            print(DCF_min)
         
                     
 
