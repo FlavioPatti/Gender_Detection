@@ -81,9 +81,7 @@ def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0):
     svm_dual_kernel = svm_dual_kernel_wrapper(
         DTR, LTR, polynomial_kernel, K, c, d, 0)
 
-    print("inizio ricerca la funzione minima")
     x, f, d_ = scipy.optimize.fmin_l_bfgs_b(svm_dual_kernel, x0, factr=1.0, bounds=bounds)
-    print("fine ricerca funzione minima")
 
     # Compute scores of test samples
     S = np.empty(DTE.shape[1])
@@ -111,9 +109,7 @@ def svm_kernel_RBF(DTR, LTR, DTE, K, C, g):
 
     svm_dual_kernel = svm_dual_kernel_wrapper(DTR, LTR, RBF_kernel, K, 0, 0, g)
     
-    print("inizio ricerca la funzione minima")
     x, f, d_ = scipy.optimize.fmin_l_bfgs_b(svm_dual_kernel, x0, factr=1.0, bounds=bounds)
-    print("fine ricerca la funzione minima")
 
     # Compute scores of test samples
     S = np.empty(DTE.shape[1])

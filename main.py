@@ -1,10 +1,10 @@
+from calendar import LocaleTextCalendar
 import numpy
 import matplotlib.pyplot as plt
 
 from Graphics import graphics
 from Preprocessing import pca
 from Preprocessing import lda
-from Preprocessing import pca_lda
 from Generative_Models import MultivariateGaussianClassifier
 from Generative_Models import NaiveBayesClassifier
 from Generative_Models import TiedGaussianClassifier
@@ -18,20 +18,20 @@ from Bayes_Decision_Model_Evaluation import BayesDecision
 from Preprocessing import Gaussianization
 
 
-FLAG_TRAINING=1
-FLAG_TESTING=0
-FLAG_SINGLEFOLD=0
-FLAG_KFOLD=1
-FLAG_SHOW_FIGURES = 0
+FLAG_TRAINING= 1
+FLAG_TESTING= 0
+FLAG_SINGLEFOLD= 1
+FLAG_KFOLD= 1
+FLAG_GAUSSIANIZATION= 0
 FLAG_PCA = 0
 FLAG_LDA = 0
+FLAG_SHOW_FIGURES = 0
 FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 0
-FLAG_SVM= 0
+FLAG_SVM= 1
 FLAG_GMM= 1
-FLAG_BAYES_DECISION = 0
 
 def vcol(v):
     return v.reshape((v.size,1))
@@ -122,9 +122,7 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
         # calculate scores
         if params is not None:
-            print("inizio algoritmo")
             llr = algorithm(DTR, LTR, DTE, *params)
-            print("fine algoritmo")
         else:
             llr = algorithm(DTR, LTR, DTE)
 
@@ -152,6 +150,12 @@ if __name__ == '__main__':
     print("Total sample of training set: ", DTR.shape[1] )
     print("Total sample of test set: ", DTE.shape[1] )
     
+    print("Total sample of class 0 for training set: ", (LTR==0).sum())
+    print("Total sample of class 1 for training set: ", (LTR==1).sum())
+    
+    print("Total sample of class 0 for test set: ", (LTE==0).sum())
+    print("Total sample of class 1 for test set: ", (LTE==1).sum())
+    
     hFea = {
         0: 'Fixed Acidity',
         1: 'Volatile Acidity',
@@ -168,16 +172,16 @@ if __name__ == '__main__':
     
     DTR0=DTR[:,LTR==0]
     DTR1=DTR[:,LTR==1]
-    print(DTR0.shape)
-    print(DTR1.shape)
+    # 3 applications: main balanced one and two unbalanced 
+    applications = [[0.5, 1, 1], [0.1, 1, 1],[0.9, 1, 1]]
+    DTR_gauss = Gaussianization.compute_ranking(DTR);
+    DTE_gauss= Gaussianization.compute_ranking(DTE);
     
     if FLAG_SHOW_FIGURES:
         graphics.plot_hist(DTR, LTR, hFea)
         graphics.plot_scatter(DTR, LTR, hFea)
-        DTR_gauss = Gaussianization.compute_ranking(DTR);
         print("dimensione DTR gauss")
         print(DTR_gauss.shape)
-        #DTE_gauss= Gaussianization.compute_ranking(DTE);
         #print("dimensione DTE gauss")
         #print(DTE_gauss.shape)
         graphics.plot_hist(DTR_gauss, LTR, hFea, "gauss");
@@ -185,6 +189,10 @@ if __name__ == '__main__':
         graphics.plot_heatmap(DTR0, "bad_wines_correlation");
         graphics.plot_heatmap(DTR1, "good_wines_correlation");
         graphics.plot_heatmap(DTR, "global_correlation");
+        
+    if FLAG_GAUSSIANIZATION:
+        DTR=DTR_gauss
+        DTE=DTE_gauss
         
     if FLAG_PCA:
         DTR=pca.PCA(DTR, LTR, 9)
@@ -196,69 +204,123 @@ if __name__ == '__main__':
         DTE=lda.LDA(DTE, LTE, 1)
         print("LDA dimensionality: ",DTR.shape)
 
-    if FLAG_PCA & FLAG_LDA:
-        DTR=pca_lda.PCA_LDA(DTR, LTR, 9)
-        DTE=pca_lda.PCA_LDA(DTE, LTE, 9)
-        print("PCA-LDA dimensionality: ",DTR.shape)
-
     if FLAG_TRAINING:
         if FLAG_SINGLEFOLD:
+            print("Singlefold")
             (DTR_T, LTR_T), (DTR_V, LTR_V)=split_db_2to1(DTR,LTR)
             sample_class0 = (LTR_T==0).sum()
             print("Sample of class 0: ", sample_class0)
             sample_class1 = (LTR_T==1).sum()
             print("Sample of class 1: ", sample_class1, "\n")
             
-            if FLAG_MVG:
-                MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR_T, LTR_T, DTR_V, LTR_V)
-
-            if FLAG_NAIVE:
-                NaiveBayesClassifier.NaiveBayesClassifier(DTR_T, LTR_T, DTR_V, LTR_V)
-
-            if FLAG_TIED:
-                TiedGaussianClassifier.TiedGaussianClassifier(DTR_T, LTR_T, DTR_V, LTR_V)
-                TiedNaiveBayes.TiedNaiveBayes(DTR_T, LTR_T, DTR_V, LTR_V)
-
-            if FLAG_LOGISTIC:
-                LinearLogisticRegression.LinearLogisticRegression(DTR_T, LTR_T, DTR_V, LTR_V)
-                QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_T, LTR_T, DTR_V, LTR_V)
-
-            if FLAG_SVM:
-                K_list = [1, 10];
-                C_list = [0.1, 1.0, 10.0];
-                for K in K_list:
-                    for C in C_list:
-                        print("SVM Linear: K = %f, C = %f" % (K,C), "\n")
-                        LinearSVM.train_SVM_linear(DTR_T,LTR_T, DTR_V, LTR_V, K,C);   
-                c_list = [0, 1]
-                for K in K_list:
-                    for C in C_list:
-                        for c in c_list:
-                            print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K,C,c), "\n")
-                            KernelSVM.svm_kernel_polynomial(DTR_T,LTR_T, DTR_V, K, C, d=2, c=c);          
-                g_list = [1,10]
-                for K in K_list:
-                    for C in C_list:
-                        for g in g_list:
-                            print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K,C,g), "\n")
-                            KernelSVM.svm_kernel_RBF(DTR_T,LTR_T, DTR_V, K, C, g= g);
-                
-            if FLAG_GMM:
-                psi = 0.01
-                M_list = [2, 4, 8]
-                versions = ["full", "diagonal", "tied"]
-                for version in versions:
-                    for M in M_list:
-                        print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
-                        gmm.GMM_classifier(DTR_T, LTR_T, DTR_V, M, psi, version = version)
-                
-            if FLAG_BAYES_DECISION:
-                BayesDecision.BayesDecision(DTR_T, LTR_T, DTR_V, LTR_V)
+            for app in applications:
+                pi1, Cfn, Cfp = app
+                print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
             
-        K = 2;
+                if FLAG_MVG:
+                    print("mvg")
+                    all_llrs = MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR_T, LTR_T, DTR_V)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+                    
+                if FLAG_NAIVE:
+                    print("naive")
+                    all_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR_T, LTR_T, DTR_V)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+
+                if FLAG_TIED:
+                    print("tied gaussian")
+                    all_llrs = TiedGaussianClassifier.TiedGaussianClassifier(DTR_T, LTR_T, DTR_V)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+                            
+                    print("tied naive")
+                    all_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR_T, LTR_T, DTR_V)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+
+                if FLAG_LOGISTIC:
+                    lambda_list = [0., 1e-6, 1e-3, 1.]
+                    for l in lambda_list:
+                        print(" linear logistic regression with lamb ", l)
+                        all_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR_T, LTR_T, DTR_V, l)
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+                
+                        print(" quadratic logistic regression with lamb ", l)
+                        all_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_T, LTR_T, DTR_V, l)
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+
+                if FLAG_SVM:
+                    
+                    K_list = [1, 10];
+                    C_list = [0.1, 1.0, 10.0];
+                    for K_ in K_list:
+                        for C in C_list:
+                            print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
+                            all_llrs = LinearSVM.train_SVM_linear(DTR_T, LTR_T, DTR_V, C, K_)  
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF min= ", DCF_min)
+                            print("DCF act = ", DCF_act)
+                        
+                    K_list = [1, 10]
+                    C_list = [0.1, 1.0, 10.0]       
+                    c_list = [0, 1]
+                    for K_ in K_list:
+                        for C in C_list:
+                            for c in c_list:
+                                print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
+                                all_llrs = KernelSVM.svm_kernel_polynomial(DTR_T, LTR_T, DTR_V, C, K_, 2, c)
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                                print("DCF min= ", DCF_min)
+                                print("DCF act = ", DCF_act)
+                            
+                    K_list = [1, 10]
+                    C_list = [0.1, 1.0, 10.0]                 
+                    g_list = [1,10]
+                    for K_ in K_list:
+                        for C in C_list:
+                            for g in g_list:
+                                print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
+                                all_llrs = KernelSVM.svm_kernel_RBF(DTR_T, LTR_T, DTR_V, K_, C, g)
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                                print("DCF min= ", DCF_min)
+                                print("DCF act = ", DCF_act)
+                            
+                    
+                if FLAG_GMM:
+                    psi = 0.01
+                    M_list = [2, 4, 8]
+                    versions = ["full", "diagonal", "tied"]
+                    for version in versions:
+                        for M in M_list:
+                            print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
+                            all_llrs = gmm.GMM_classifier(DTR_T, LTR_T, DTR_V, M, psi, version) 
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF min= ", DCF_min)
+                            print("DCF act = ", DCF_act)
+        
+        K = 5;
         if FLAG_KFOLD: 
-             # 3 applications: main balanced one and two unbalanced
-            applications = [[0.5, 1, 1], [0.1, 1, 1], [0.9, 1, 1]]
+            print("K fold")
             for app in applications:
                 pi1, Cfn, Cfp = app
                 print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
@@ -267,24 +329,32 @@ if __name__ == '__main__':
                     print("mvg")
                     all_llrs, all_labels = k_fold(DTR, LTR, K, MultivariateGaussianClassifier.MultivariateGaussianClassifier)
                     DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                    print(DCF_min)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
                     
                 if FLAG_NAIVE:
                     print("naive")
                     all_llrs, all_labels = k_fold(DTR, LTR, K, NaiveBayesClassifier.NaiveBayesClassifier)
                     DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                    print(DCF_min)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
 
                 if FLAG_TIED:
                     print("tied gaussian")
                     all_llrs, all_labels = k_fold(DTR, LTR, K,  TiedGaussianClassifier.TiedGaussianClassifier)
                     DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                    print(DCF_min)
-                          
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+                            
                     print("tied naive")
                     all_llrs, all_labels = k_fold(DTR, LTR, K,  TiedNaiveBayes.TiedNaiveBayes)
                     DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                    print(DCF_min)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
 
                 if FLAG_LOGISTIC:
                     lambda_list = [0., 1e-6, 1e-3, 1.]
@@ -292,13 +362,17 @@ if __name__ == '__main__':
                         print(" linear logistic regression with lamb ", l)
                         all_llrs, all_labels = k_fold(DTR, LTR, K, LinearLogisticRegression.LinearLogisticRegression, (l,))
                         DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                        print(DCF_min)
-                
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+                    """
                         print(" quadratic logistic regression with lamb ", l)
                         all_llrs, all_labels = k_fold(DTR, LTR, K,  QuadraticLogisticRegression.QuadraticLogisticRegression, (l,))
                         DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                        print(DCF_min)
-
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+"""
                 if FLAG_SVM:
                     
                     K_list = [1, 10];
@@ -308,8 +382,10 @@ if __name__ == '__main__':
                             print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
                             all_llrs, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, (K_,C) )  
                             DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                            print(DCF_min) 
-                     
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            print("DCF min= ", DCF_min)
+                            print("DCF act = ", DCF_act)
+                        
                     K_list = [1, 10]
                     C_list = [0.1, 1.0, 10.0]       
                     c_list = [0, 1]
@@ -320,8 +396,10 @@ if __name__ == '__main__':
                                 all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, 2, c) )
                                 print(all_llrs, all_labels)
                                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                                print(DCF_min)  
-                           
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                print("DCF min= ", DCF_min)
+                                print("DCF act = ", DCF_act)
+                            
                     K_list = [1, 10]
                     C_list = [0.1, 1.0, 10.0]                 
                     g_list = [1,10]
@@ -331,69 +409,129 @@ if __name__ == '__main__':
                                 print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
                                 all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g) )
                                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                                print(DCF_min) 
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                print("DCF min= ", DCF_min)
+                                print("DCF act = ", DCF_act)
                             
                     
                 if FLAG_GMM:
                     psi = 0.01
-                    M_list = [2, 4, 8]
+                    M_list = [2, 4]
                     versions = ["full", "diagonal", "tied"]
                     for version in versions:
                         for M in M_list:
                             print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
                             all_llrs, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, (M, psi, version) )
                             DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
-                            print(DCF_min)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            print("DCF min= ", DCF_min)
+                            print("DCF act = ", DCF_act)
         
-                    
+                
 
     if FLAG_TESTING:
-        if FLAG_MVG:
-            MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR, LTR, DTE, LTE)
         
-        if FLAG_NAIVE:
-            NaiveBayesClassifier.NaiveBayesClassifier(DTR, LTR, DTE, LTE)
+        for app in applications:
+            pi1, Cfn, Cfp = app
+            print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
         
-        if FLAG_TIED:
-            TiedGaussianClassifier.TiedGaussianClassifier(DTR, LTR, DTE, LTE)
-            TiedNaiveBayes.TiedNaiveBayes(DTR, LTR, DTE, LTE)
-        
-        if FLAG_LOGISTIC:
-            LinearLogisticRegression.LinearLogisticRegression(DTR, LTR, DTE, LTE)
-            QuadraticLogisticRegression.QuadraticLogisticRegression(DTR, LTR, DTE, LTE)
-
-        if FLAG_SVM:
-            K_list = [1, 10];
-            C_list = [0.1, 1.0, 10.0];
-            for K in K_list:
-                for C in C_list:
-                    print("SVM Linear: K = %f, C = %f" % (K,C), "\n")
-                    LinearSVM.train_SVM_linear(DTR,LTR, DTE, LTE, K,C);   
-            c_list = [0, 1]
-            for K in K_list:
-                for C in C_list:
-                    for c in c_list:
-                        print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K,C,c), "\n")
-                        KernelSVM.svm_kernel_polynomial(DTR,LTR, DTE, K, C, d=2, c=c);          
-            g_list = [1,10]
-            for K in K_list:
-                for C in C_list:
-                    for g in g_list:
-                        print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K,C,g), "\n")
-                        KernelSVM.svm_kernel_RBF(DTR,LTR, DTE, K, C, g= g);
-            
-        if FLAG_GMM:
-            psi = 0.01
-            M_list = [2, 4, 8]
-            versions = ["full", "diagonal", "tied"]
-            for version in versions:
-                for M in M_list:
-                    print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
-                    gmm.GMM_classifier(DTR, LTR, DTE, M, psi, version = version)
+            if FLAG_MVG:
+                print("mvg")
+                all_llrs = MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR, LTR, DTE)
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
                 
-        if FLAG_BAYES_DECISION:
-            BayesDecision.BayesDecision(DTR, LTR, DTE, LTE)
-    
-    
-    
-    
+            if FLAG_NAIVE:
+                print("naive")
+                all_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR, LTR, DTE)
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
+
+            if FLAG_TIED:
+                print("tied gaussian")
+                all_llrs = TiedGaussianClassifier.TiedGaussianClassifier(DTR, LTR, DTE)
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
+                        
+                print("tied naive")
+                all_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR, LTR, DTE)
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
+
+            if FLAG_LOGISTIC:
+                lambda_list = [0., 1e-6, 1e-3, 1.]
+                for l in lambda_list:
+                    print(" linear logistic regression with lamb ", l)
+                    all_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR, LTR, DTE, l)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+            
+                    print(" quadratic logistic regression with lamb ", l)
+                    all_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR, LTR, DTE, l)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                    print("DCF min= ", DCF_min)
+                    print("DCF act = ", DCF_act)
+
+            if FLAG_SVM:
+                
+                K_list = [1, 10];
+                C_list = [0.1, 1.0, 10.0];
+                for K_ in K_list:
+                    for C in C_list:
+                        print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
+                        all_llrs = LinearSVM.train_SVM_linear(DTR, LTR, DTE, C, K_)  
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+                    
+                K_list = [1, 10]
+                C_list = [0.1, 1.0, 10.0]       
+                c_list = [0, 1]
+                for K_ in K_list:
+                    for C in C_list:
+                        for c in c_list:
+                            print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
+                            all_llrs = KernelSVM.svm_kernel_polynomial(DTR, LTR, DTE, C, K_, 2, c)
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                            print("DCF min= ", DCF_min)
+                            print("DCF act = ", DCF_act)
+                        
+                K_list = [1, 10]
+                C_list = [0.1, 1.0, 10.0]                 
+                g_list = [1,10]
+                for K_ in K_list:
+                    for C in C_list:
+                        for g in g_list:
+                            print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
+                            all_llrs = KernelSVM.svm_kernel_RBF(DTR, LTR, DTE, K_, C, g)
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                            print("DCF min= ", DCF_min)
+                            print("DCF act = ", DCF_act)
+                        
+                
+            if FLAG_GMM:
+                psi = 0.01
+                M_list = [2, 4, 8]
+                versions = ["full", "diagonal", "tied"]
+                for version in versions:
+                    for M in M_list:
+                        print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
+                        all_llrs = gmm.GMM_classifier(DTR, LTR, DTE, M, psi, version)
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTE, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
