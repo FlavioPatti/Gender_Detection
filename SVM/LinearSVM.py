@@ -50,8 +50,9 @@ def train_SVM_linear(DTR, LTR, DTE, C, K):
     
     DTEEXT = numpy.vstack([DTE, K* numpy.ones((1,DTE.shape[1] ))])    
      
-    S1 = numpy.dot(wStar.T, DTEEXT);
+    S = numpy.dot(wStar.T, DTEEXT);
+    S = numpy.hstack(mrow(S))
     
-    return S1
+    return S
 
     

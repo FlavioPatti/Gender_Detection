@@ -69,7 +69,7 @@ def svm_dual_kernel_wrapper(DTR, LTR, kernel, K, c, d, gamma):
 
 
 
-def svm_kernel_polynomial(DTR, LTR, DTE, K, C, c, d=2):
+def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0):
     """ Implementation of the svm classifier using polynomial kernel function """
     N = DTR.shape[1]
     # starting point
@@ -108,7 +108,7 @@ def svm_kernel_RBF(DTR, LTR, DTE, K, C, g):
         bounds.append((0, C))
 
     svm_dual_kernel = svm_dual_kernel_wrapper(DTR, LTR, RBF_kernel, K, 0, 0, g)
-
+    
     x, f, d_ = scipy.optimize.fmin_l_bfgs_b(svm_dual_kernel, x0, factr=1.0, bounds=bounds)
 
     # Compute scores of test samples
