@@ -20,17 +20,18 @@ from Preprocessing import Gaussianization
 
 FLAG_TRAINING= 1
 FLAG_TESTING= 0
+FLAG_SHOW_FIGURES = 0
+FLAG_CALIBRATION=1
 FLAG_SINGLEFOLD= 1
-FLAG_KFOLD= 1
+FLAG_KFOLD= 0
 FLAG_GAUSSIANIZATION= 0
 FLAG_PCA = 0
 FLAG_LDA = 0
-FLAG_SHOW_FIGURES = 0
 FLAG_MVG = 0
 FLAG_NAIVE = 0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 0
-FLAG_SVM= 1
+FLAG_SVM= 0
 FLAG_GMM= 1
 
 def vcol(v):
@@ -224,6 +225,13 @@ if __name__ == '__main__':
                     DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
+                    if FLAG_CALIBRATION:
+                        lambda_list = [0., 1e-6, 1e-3, 1.]
+                        for l in lambda_list:
+                            print(" linear logistic regression with lamb ", l)
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
                     
                 if FLAG_NAIVE:
                     print("naive")
@@ -232,6 +240,13 @@ if __name__ == '__main__':
                     DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
+                    if FLAG_CALIBRATION:
+                        lambda_list = [0., 1e-6, 1e-3, 1.]
+                        for l in lambda_list:
+                            print(" linear logistic regression with lamb ", l)
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
 
                 if FLAG_TIED:
                     print("tied gaussian")
@@ -240,6 +255,13 @@ if __name__ == '__main__':
                     DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
+                    if FLAG_CALIBRATION:
+                        lambda_list = [0., 1e-6, 1e-3, 1.]
+                        for l in lambda_list:
+                            print(" linear logistic regression with lamb ", l)
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
                             
                     print("tied naive")
                     all_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR_T, LTR_T, DTR_V)
@@ -247,6 +269,13 @@ if __name__ == '__main__':
                     DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
+                    if FLAG_CALIBRATION:
+                        lambda_list = [0., 1e-6, 1e-3, 1.]
+                        for l in lambda_list:
+                            print(" linear logistic regression with lamb ", l)
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
 
                 if FLAG_LOGISTIC:
                     lambda_list = [0., 1e-6, 1e-3, 1.]
@@ -257,6 +286,11 @@ if __name__ == '__main__':
                         DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
+                        if FLAG_CALIBRATION:
+                            print(" linear logistic regression with lamb ", l)
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
                 
                         print(" quadratic logistic regression with lamb ", l)
                         all_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_T, LTR_T, DTR_V, l)
@@ -264,6 +298,11 @@ if __name__ == '__main__':
                         DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
+                        if FLAG_CALIBRATION:
+                            print(" linear logistic regression with lamb ", l)
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
 
                 if FLAG_SVM:
                     
@@ -277,6 +316,13 @@ if __name__ == '__main__':
                             DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
+                            if FLAG_CALIBRATION:
+                                lambda_list = [0., 1e-6, 1e-3, 1.]
+                                for l in lambda_list:
+                                    print(" linear logistic regression with lamb ", l)
+                                    cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                                    DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                                    print("DCF calibrated act = ", DCF_act)
                         
                     K_list = [1, 10]
                     C_list = [0.1, 1.0, 10.0]       
@@ -290,6 +336,13 @@ if __name__ == '__main__':
                                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
+                                if FLAG_CALIBRATION:
+                                    lambda_list = [0., 1e-6, 1e-3, 1.]
+                                    for l in lambda_list:
+                                        print(" linear logistic regression with lamb ", l)
+                                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                                        print("DCF calibrated act = ", DCF_act)
                             
                     K_list = [1, 10]
                     C_list = [0.1, 1.0, 10.0]                 
@@ -303,6 +356,13 @@ if __name__ == '__main__':
                                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
+                                if FLAG_CALIBRATION:
+                                    lambda_list = [0., 1e-6, 1e-3, 1.]
+                                    for l in lambda_list:
+                                        print(" linear logistic regression with lamb ", l)
+                                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                                        print("DCF calibrated act = ", DCF_act)
                             
                     
                 if FLAG_GMM:
@@ -317,6 +377,13 @@ if __name__ == '__main__':
                             DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
+                            if FLAG_CALIBRATION:
+                                lambda_list = [0., 1e-6, 1e-3, 1.]
+                                for l in lambda_list:
+                                    print(" linear logistic regression with lamb ", l)
+                                    cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,pi1)
+                                    DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
+                                    print("DCF calibrated act = ", DCF_act)
         
         K = 5;
         if FLAG_KFOLD: 
