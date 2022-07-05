@@ -21,18 +21,18 @@ from Preprocessing import Gaussianization
 FLAG_TRAINING= 1
 FLAG_TESTING= 0
 FLAG_SHOW_FIGURES = 0
-FLAG_CALIBRATION=1
+FLAG_CALIBRATION=0
 FLAG_SINGLEFOLD= 1
 FLAG_KFOLD= 0
-FLAG_GAUSSIANIZATION= 0
+FLAG_GAUSSIANIZATION= 1
 FLAG_PCA = 0
 FLAG_LDA = 0
-FLAG_MVG = 0
-FLAG_NAIVE = 0
-FLAG_TIED = 0
-FLAG_LOGISTIC = 0
+FLAG_MVG = 1
+FLAG_NAIVE = 1
+FLAG_TIED = 1
+FLAG_LOGISTIC = 1
 FLAG_SVM= 0
-FLAG_GMM= 1
+FLAG_GMM= 0
 
 def vcol(v):
     return v.reshape((v.size,1))
@@ -120,7 +120,19 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
         DTE = D[:, idx_test]
         LTR = L[idx_train]
         LTE = L[idx_test]
+        if FLAG_GAUSSIANIZATION:
+            DTR = Gaussianization.compute_ranking(DTR);
+            DTE= Gaussianization.compute_ranking(DTE);
+            
+        if FLAG_PCA:
+            DTR=pca.PCA(DTR, LTR, 9)
+            DTE=pca.PCA(DTE, LTE, 9)
+            print("PCA dimensionality: ",DTR.shape)
 
+        if FLAG_LDA:
+            DTR=lda.LDA(DTR, LTR, 1)
+            DTE=lda.LDA(DTE, LTE, 1)
+            print("LDA dimensionality: ",DTR.shape)
         # calculate scores
         if params is not None:
             llr = algorithm(DTR, LTR, DTE, *params)
@@ -175,12 +187,13 @@ if __name__ == '__main__':
     DTR1=DTR[:,LTR==1]
     # 3 applications: main balanced one and two unbalanced 
     applications = [[0.5, 1, 1], [0.1, 1, 1],[0.9, 1, 1]]
-    DTR_gauss = Gaussianization.compute_ranking(DTR);
-    DTE_gauss= Gaussianization.compute_ranking(DTE);
+
     
     if FLAG_SHOW_FIGURES:
         graphics.plot_hist(DTR, LTR, hFea)
         graphics.plot_scatter(DTR, LTR, hFea)
+        DTR_gauss = Gaussianization.compute_ranking(DTR);
+        DTE_gauss= Gaussianization.compute_ranking(DTE);
         print("dimensione DTR gauss")
         print(DTR_gauss.shape)
         #print("dimensione DTE gauss")
@@ -190,20 +203,6 @@ if __name__ == '__main__':
         graphics.plot_heatmap(DTR0, "bad_wines_correlation");
         graphics.plot_heatmap(DTR1, "good_wines_correlation");
         graphics.plot_heatmap(DTR, "global_correlation");
-        
-    if FLAG_GAUSSIANIZATION:
-        DTR=DTR_gauss
-        DTE=DTE_gauss
-        
-    if FLAG_PCA:
-        DTR=pca.PCA(DTR, LTR, 9)
-        DTE=pca.PCA(DTE, LTE, 9)
-        print("PCA dimensionality: ",DTR.shape)
-
-    if FLAG_LDA:
-        DTR=lda.LDA(DTR, LTR, 1)
-        DTE=lda.LDA(DTE, LTE, 1)
-        print("LDA dimensionality: ",DTR.shape)
 
     if FLAG_TRAINING:
         if FLAG_SINGLEFOLD:
@@ -213,6 +212,19 @@ if __name__ == '__main__':
             print("Sample of class 0: ", sample_class0)
             sample_class1 = (LTR_T==1).sum()
             print("Sample of class 1: ", sample_class1, "\n")
+            if FLAG_GAUSSIANIZATION:
+                DTR_T = Gaussianization.compute_ranking(DTR_T);
+                DTR_V= Gaussianization.compute_ranking(DTR_V);
+                
+            if FLAG_PCA:
+                DTR_T=pca.PCA(DTR_T, LTR_T, 9)
+                DTR_V=pca.PCA(DTR_V, LTR_V, 9)
+                print("PCA dimensionality: ",DTR.shape)
+
+            if FLAG_LDA:
+                DTR_T=lda.LDA(DTR_T, LTR_T, 1)
+                DTR_V=lda.LDA(DTR_V, LTR_V, 1)
+                print("LDA dimensionality: ",DTR.shape)
             
             for app in applications:
                 pi1, Cfn, Cfp = app
@@ -497,6 +509,19 @@ if __name__ == '__main__':
                 
 
     if FLAG_TESTING:
+        if FLAG_GAUSSIANIZATION:
+            DTR = Gaussianization.compute_ranking(DTR);
+            DTE= Gaussianization.compute_ranking(DTE);
+            
+        if FLAG_PCA:
+            DTR=pca.PCA(DTR, LTR, 9)
+            DTE=pca.PCA(DTE, LTE, 9)
+            print("PCA dimensionality: ",DTR.shape)
+
+        if FLAG_LDA:
+            DTR=lda.LDA(DTR, LTR, 1)
+            DTE=lda.LDA(DTE, LTE, 1)
+            print("LDA dimensionality: ",DTR.shape)
         
         for app in applications:
             pi1, Cfn, Cfp = app
