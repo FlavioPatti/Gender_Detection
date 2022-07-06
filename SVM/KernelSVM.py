@@ -69,14 +69,28 @@ def svm_dual_kernel_wrapper(DTR, LTR, kernel, K, c, d, gamma):
 
 
 
-def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0):
+def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0, pi_T = 0, balanced = False):
     """ Implementation of the svm classifier using polynomial kernel function """
     N = DTR.shape[1]
     # starting point
     x0 = np.zeros(N)
     bounds = []
-    for i in range(N):
-        bounds.append((0, C))
+    if balanced == False:
+        for i in range(DTR.shape[1]):
+            bounds.append((0, C))
+    elif balanced == True:
+        N = LTR.size #tot number of samples
+        n_T = (1*(LTR==1)).sum() #num of samples belonging to the true class
+        n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
+        pi_emp_T = n_T / N
+        pi_emp_F = n_F / N
+        C_T = C * pi_T / pi_emp_T
+        C_F = C * (1-pi_T) / pi_emp_F 
+        for i in range(DTR.shape[1]):
+            if LTR[i] == 1:
+                bounds.append((0,C_T))
+            else:
+                bounds.append((0,C_F))
 
     svm_dual_kernel = svm_dual_kernel_wrapper(
         DTR, LTR, polynomial_kernel, K, c, d, 0)
@@ -98,14 +112,28 @@ def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0):
 
 
 
-def svm_kernel_RBF(DTR, LTR, DTE, K, C, g):
+def svm_kernel_RBF(DTR, LTR, DTE, K, C, g, pi_T, balanced = False):
     """ Implementation of the svm classifier using RBF kernel function """
     N = DTR.shape[1]
     # starting point
     x0 = np.zeros(N)
     bounds = []
-    for i in range(N):
-        bounds.append((0, C))
+    if balanced == False:
+        for i in range(DTR.shape[1]):
+            bounds.append((0, C))
+    elif balanced == True:
+        N = LTR.size #tot number of samples
+        n_T = (1*(LTR==1)).sum() #num of samples belonging to the true class
+        n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
+        pi_emp_T = n_T / N
+        pi_emp_F = n_F / N
+        C_T = C * pi_T / pi_emp_T
+        C_F = C * (1-pi_T) / pi_emp_F 
+        for i in range(DTR.shape[1]):
+            if LTR[i] == 1:
+                bounds.append((0,C_T))
+            else:
+                bounds.append((0,C_F))
 
     svm_dual_kernel = svm_dual_kernel_wrapper(DTR, LTR, RBF_kernel, K, 0, 0, g)
     
