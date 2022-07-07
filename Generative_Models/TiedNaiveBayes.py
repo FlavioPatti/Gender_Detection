@@ -40,16 +40,15 @@ def TiedNaiveBayes(DTrain, LTrain, DTest):
     Ct_naive_bayes = Ct * I 
     
     for lab in [0,1]:
-    
-        mu, C = ML_GAU(DTrain[:, LTrain==lab]) 
+        mu = vcol(DTrain[:, LTrain==lab].mean(1)) 
         h[lab] = (mu, Ct_naive_bayes)
     
     llr = numpy.zeros((2, DTest.shape[1]))
 
     for lab in [0,1]:
-        mu, C = h[lab]
+        mu, C_naive_bayes = h[lab]
      
-        llr[lab, :] = logpdf_GAU_ND(DTest,mu, C).ravel()
+        llr[lab, :] = logpdf_GAU_ND(DTest,mu, C_naive_bayes).ravel()
     
     
     return llr[1]-llr[0]
