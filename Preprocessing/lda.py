@@ -27,13 +27,13 @@ def compute_sw(D,L): #within coviariance matrix
         #(L==i).sum() = numero campioni per ogni classe = 50 
     return SW / D.shape[1]  
     
-def LDA(D, L, m):
+def LDA(DTR, LTR,DTE, m):
     
-    SW = compute_sw(D,L)
-    SB = compute_sb(D,L)
+    SW = compute_sw(DTR,LTR)
+    SB = compute_sb(DTR,LTR)
     s, U = scipy.linalg.eigh(SB,SW)
     W = U[:, ::-1][:, 0:m]
     
-    DW = numpy.dot(W.T, D)
+    DW = numpy.dot(W.T, DTE)
     
     return DW

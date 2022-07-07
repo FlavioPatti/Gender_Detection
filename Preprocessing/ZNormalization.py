@@ -8,8 +8,8 @@ def mcol(v):
 def mrow(v):
     return v.reshape((1,v.size))
 
-def ZNormalization(D):
-    mean = D.mean(axis=1)
-    standardDeviation = D.std(axis=1)
-    ZD = (D-mcol(mean))/mcol(standardDeviation)
+def ZNormalization(DTR,DTE):
+    mean = DTR.mean(axis=1)
+    standardDeviation = DTR.std(axis=1)
+    ZD = (DTE-mcol(mean))/mcol(standardDeviation)
     return ZD

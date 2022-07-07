@@ -23,16 +23,16 @@ from Preprocessing import Gaussianization
 FLAG_TRAINING= 1
 FLAG_TESTING= 0
 FLAG_SHOW_FIGURES_INIIT = 0
-FLAG_SHOW_FIGURES_END = 1
+FLAG_SHOW_FIGURES_END = 0
 FLAG_CALIBRATION=0
 FLAG_SINGLEFOLD= 1
 FLAG_KFOLD= 0
 FLAG_BALANCING=0
-FLAG_GAUSSIANIZATION= 0
+FLAG_GAUSSIANIZATION= 1
 FLAG_ZNORMALIZATION=0
 FLAG_PCA = 0
 FLAG_LDA = 0
-FLAG_MVG = 0
+FLAG_MVG = 1
 FLAG_NAIVE = 0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 1
@@ -126,17 +126,23 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
         LTR = L[idx_train]
         LTE = L[idx_test]
         if FLAG_GAUSSIANIZATION:
-            DTR = Gaussianization.compute_ranking(DTR);
-            DTE= Gaussianization.compute_ranking(DTE);
+            DTE= Gaussianization.Gaussianization(DTR,DTE);
+            DTR = Gaussianization.Gaussianization(DTR,DTR);
+            print("Gaussianization")
+
+        if FLAG_ZNORMALIZATION:
+                DTE = ZNormalization.ZNormalization(DTR,DTE);
+                DTR = ZNormalization.ZNormalization(DTR,DTR);
+                print("Z-normalization")
             
         if FLAG_PCA:
-            DTR=pca.PCA(DTR, LTR, 9)
-            DTE=pca.PCA(DTE, LTE, 9)
+            DTE=pca.PCA(DTR, DTE, 9)
+            DTR=pca.PCA(DTR, DTR, 9)
             print("PCA dimensionality: ",DTR.shape)
 
         if FLAG_LDA:
-            DTR=lda.LDA(DTR, LTR, 1)
-            DTE=lda.LDA(DTE, LTE, 1)
+            DTE=lda.LDA(DTR, LTR,DTE, 1)
+            DTR=lda.LDA(DTR, LTR,DTR, 1)
             print("LDA dimensionality: ",DTR.shape)
         # calculate scores
         if params is not None:
@@ -197,8 +203,8 @@ if __name__ == '__main__':
     if FLAG_SHOW_FIGURES_INIIT:
         #graphics.plot_hist(DTR, LTR, hFea)
         #graphics.plot_scatter(DTR, LTR, hFea)
-        DTR_gauss = Gaussianization.compute_ranking(DTR);
-        DTE_gauss= Gaussianization.compute_ranking(DTE);
+        DTR_gauss = Gaussianization.Gaussianization(DTR);
+        DTE_gauss= Gaussianization.Gaussianization(DTE);
         print("dimensione DTR gauss")
         print(DTR_gauss.shape)
         #print("dimensione DTE gauss")
@@ -223,23 +229,24 @@ if __name__ == '__main__':
             print("Sample of class 1: ", sample_class1, "\n")
 
             if FLAG_GAUSSIANIZATION:
-                DTR_T = Gaussianization.compute_ranking(DTR_T);
-                DTR_V= Gaussianization.compute_ranking(DTR_V);
+                DTR_V = Gaussianization.Gaussianization(DTR_T,DTR_V);
+                DTR_T = Gaussianization.Gaussianization(DTR_T,DTR_T);
+                print("Gaussianization")
 
             if FLAG_ZNORMALIZATION:
-                DTR_T = ZNormalization.ZNormalization(DTR_T);
-                DTR_V = ZNormalization.ZNormalization(DTR_V);
+                DTR_V = ZNormalization.ZNormalization(DTR_T,DTR_V);
+                DTR_T = ZNormalization.ZNormalization(DTR_T,DTR_T);
                 print("Z-normalization")   
                  
             if FLAG_PCA:
-                DTR_T=pca.PCA(DTR_T, LTR_T, 9)
-                DTR_V=pca.PCA(DTR_V, LTR_V, 9)
-                print("PCA dimensionality: ",DTR.shape)
+                DTR_V=pca.PCA(DTR_T, DTR_V, 9)
+                DTR_T=pca.PCA(DTR_T, DTR_T, 9)
+                print("PCA dimensionality: ",DTR_T.shape)
 
             if FLAG_LDA:
-                DTR_T=lda.LDA(DTR_T, LTR_T, 1)
-                DTR_V=lda.LDA(DTR_V, LTR_V, 1)
-                print("LDA dimensionality: ",DTR.shape)
+                DTR_V=lda.LDA(DTR_T, LTR_T,DTR_V, 1)
+                DTR_T=lda.LDA(DTR_T, LTR_T,DTR_T, 1)
+                print("LDA dimensionality: ",DTR_T.shape)
 
             for app in applications:
                 pi1, Cfn, Cfp = app
@@ -515,6 +522,7 @@ if __name__ == '__main__':
                         DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
+                        listMinDCF.append(DCF_min)
 
                 if FLAG_SVM:
                     
@@ -574,19 +582,26 @@ if __name__ == '__main__':
             lambda_list_plot = [1e-12, 1e-6, 1e-3,1]
             print("listMinDCF lenght: ", len(listMinDCF))
             graphics.plotDCF(lambda_list_plot,listMinDCF,"λ")
+
     if FLAG_TESTING:
         if FLAG_GAUSSIANIZATION:
-            DTR = Gaussianization.compute_ranking(DTR);
-            DTE= Gaussianization.compute_ranking(DTE);
-            
+            DTE= Gaussianization.Gaussianization(DTR,DTE);
+            DTR = Gaussianization.Gaussianization(DTR,DTR);
+            print("Gaussianization")
+
+        if FLAG_ZNORMALIZATION:
+            DTE = ZNormalization.ZNormalization(DTR,DTE);
+            DTR = ZNormalization.ZNormalization(DTR,DTR);
+            print("Z-normalization")
+
         if FLAG_PCA:
-            DTR=pca.PCA(DTR, LTR, 9)
-            DTE=pca.PCA(DTE, LTE, 9)
+            DTE=pca.PCA(DTR, DTE, 9)
+            DTR=pca.PCA(DTR, DTR, 9)
             print("PCA dimensionality: ",DTR.shape)
 
         if FLAG_LDA:
-            DTR=lda.LDA(DTR, LTR, 1)
-            DTE=lda.LDA(DTE, LTE, 1)
+            DTE=lda.LDA(DTR, LTR,DTE, 1)
+            DTR=lda.LDA(DTR, LTR,DTR, 1)
             print("LDA dimensionality: ",DTR.shape)
         
         for app in applications:
