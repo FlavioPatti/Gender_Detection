@@ -5,8 +5,6 @@ def vcol(v):
     return v.reshape((v.size,1))
 
 def PCA(DTR,DTE,m): 
-    print(DTR.shape)
-    print(DTE.shape)   
     mu =DTR.mean(1) 
     DC = DTR-vcol(mu)
     C = numpy.dot(DC,DC.T) / DTR.shape[1]
