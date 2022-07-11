@@ -1,22 +1,9 @@
-import numpy
 import matplotlib.pyplot as plt
 import scipy
 
-"""
-def compute_ranking(D):
-    N = D.shape[1]
-    ranks = []
-    for j in range(D.shape[0]):
-        tempSum = 0
-        for i in range(D.shape[1]):
-            tempSum += (D[j, :] < D[j,i]).astype(int)
-        tempSum += 1;
-        ranks.append(tempSum/(N+2))
-    D_gauss = scipy.stats.norm.ppf(ranks)
+"""Compute the Gaussianization of the dataset (mapping a set of features to values whose empirical cumulative distribution function
+is well approximated by a Gaussian c.d.f.)"""
 
-        
-    return D_gauss
-"""
 def Gaussianization(DTR,DTE):
     N = DTR.shape[1]
     ranks = []

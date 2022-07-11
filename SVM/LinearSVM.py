@@ -9,6 +9,8 @@ def mrow(v):
     return v.reshape((1,v.size))
 
 def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
+    """Implementation of the Linear SVM """
+    
     DTREXT = numpy.vstack([DTR, K* numpy.ones((1,DTR.shape[1] ))])
     
     Z = numpy.zeros(LTR.shape)
@@ -18,20 +20,18 @@ def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
     H = numpy.dot(DTREXT.T, DTREXT)
     H = mcol(Z)* mrow(Z) * H
     
-    def JDual(alpha): #dual SVM
+    def JDual(alpha):
         Ha = numpy.dot(H,mcol(alpha))
         aHa = numpy.dot(mrow(alpha), Ha)
         a1 = alpha.sum()
         return -0.5* aHa.ravel() + a1, -Ha.ravel() + numpy.ones(alpha.size) 
-                                        #derivata rispetto a alpha(opzionale perchè poi la funzione lo calcola automaticamente)
+                                       
     def LDual(alpha): 
         loss, grad = JDual(alpha)
         return -loss, -grad 
-    #il dual problem prevede di calcolare la soluzione massimizzando rispetto alpha la loss
-    #utilizzando fmin_l_bfgs_b vogliamo minimizzare la nostra funzione obiettivo che otteniamo semplicemente passando alla funzione -loss
     
-    def JPrimal(w): #primal SVM
-        S = numpy.dot(mrow(w), DTREXT) #mrow(w) = w*T
+    def JPrimal(w): 
+        S = numpy.dot(mrow(w), DTREXT) 
         loss = numpy.maximum(numpy.zeros(S.shape), 1-Z*S).sum()
         return 0.5 *numpy.linalg.norm(w)*2 + C * loss
     
@@ -52,18 +52,11 @@ def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
                 bounds.append((0,C_T))
             else:
                 bounds.append((0,C_F))
-    
-    
-# LDual: la funzione che vogliamo minimizzare.
-# x0: il valore iniziale per l'algoritmo. [0 ,.., 0]
-#restituisce una tupla con tre valori alphaStar, _x, _y
-# alphaStar è la posizione stimata del minimo
  
-    alphaStar, _x, _y, = scipy.optimize.fmin_l_bfgs_b( #calcolo la soluzione dalla dual perchè è differenziabile mentre la primal no
+    alphaStar, _x, _y, = scipy.optimize.fmin_l_bfgs_b( 
         LDual, numpy.zeros(DTR.shape[1]), bounds = bounds, factr = 0.0, maxiter = 100000, maxfun = 100000
     )
     
-    #una volta che ho calcolato alphaStar, primal e dual problem sono legate da w = Sommatoria: alphaStar*z*x
     wStar = numpy.dot(DTREXT, mcol(alphaStar)*mcol(Z))
     
     DTEEXT = numpy.vstack([DTE, K* numpy.ones((1,DTE.shape[1] ))])    

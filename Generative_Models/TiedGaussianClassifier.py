@@ -18,16 +18,20 @@ def compute_empirical_cov(D):
     C = numpy.dot(DC,DC.T) / D.shape[1]
     return C 
 
-def compute_sw(D,L): #within coviariance matrix
+def compute_sw(D,L): 
     SW = 0
     for i in [0,1]:
-        SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i]) #calcolo la matrice di covarianza C come in PCA però per tutte le classi all'interno del dataset
-        #(L==i).sum() = numero campioni per ogni classe = 50 
+        SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i]) 
     return SW / D.shape[1]  
 
 
 def TiedGaussianClassifier(DTrain,LTrain, DTest): 
-
+    """ Implementation of the Tied Gaussian Classifier
+        based on MVG version with log_densities
+        DTR and LTR are training data and labels
+        DTE are evaluation data
+        returns: the log-likelihood ratio
+    """
     h = {}
     
     Ct = compute_sw(DTrain, LTrain)

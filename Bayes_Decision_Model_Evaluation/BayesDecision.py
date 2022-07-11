@@ -1,6 +1,13 @@
 import numpy
 
 def compute_min_DCF(llrs, Labels, pi, cfn, cfp):
+    
+    """ Compute the minimum detection cost, given the binary
+        log likelihood ratios llr
+        labels is the array of labels
+        pi1, Cfn, Cfp are the parameters for the application
+    """
+    
     triplete = numpy.array([pi,cfn,cfp]) #pi, Cfn, Cfp
     thresholds = numpy.array(llrs)
     thresholds.sort()
@@ -28,6 +35,11 @@ def compute_min_DCF(llrs, Labels, pi, cfn, cfp):
     return DCF_min
 
 def compute_act_DCF(llrs, Labels, pi, cfn, cfp):
+    """ Compute the actual detection cost, given the binary
+        log likelihood ratios llr
+        labels is the array of labels
+        pi1, Cfn, Cfp are the parameters for the application
+    """
     triplete = numpy.array([pi,cfn,cfp]) #pi, Cfn, Cfp
     
     thread = (triplete[0]*triplete[1]) / ( ( 1- triplete[0])*triplete[2] ) 
@@ -49,16 +61,5 @@ def compute_act_DCF(llrs, Labels, pi, cfn, cfp):
     B_dummy = min(Bdummy1, Bdummy2)
     DCF_norm = DCF/B_dummy
     return DCF_norm
-
-def bayes_error_plot(pArray,llrs,Labels, minCost=False):
-    y=[]
-    for p in pArray:
-        pi = 1.0/(1.0+numpy.exp(-p))
-        if minCost:
-            y.append(compute_min_DCF(llrs, Labels, pi, 1, 1))
-        else: 
-            y.append(compute_act_DCF(llrs, Labels, pi, 1, 1))
-
-    return numpy.array(y)
 
 

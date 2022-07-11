@@ -1,12 +1,6 @@
 import numpy
-import matplotlib
 import matplotlib.pyplot as plt
 import scipy.optimize
-import sklearn
-import sys
-import sklearn.datasets
-#Le soluzioni di logistic regression non possono essere calcolate in forma chiusa, 
-#ricorreremo a numerical solvers (solutori numerici), un risolutore numerico cerca iterativamente il minimizzatore di una funzione
 
 def mcol(v):
     return v.reshape((v.size,1))
@@ -21,15 +15,15 @@ def logreg_obj_wrap(DTR, LTR, l):
         w = mcol(v[0:M])
         b = v[-1]
         S = numpy.dot(w.T, DTR) + b
-        cxe = numpy.logaddexp(0, -S*Z).mean() #calcola log exp(0)=1 + log exp (-S*Z) per ogni elemento
+        cxe = numpy.logaddexp(0, -S*Z).mean() 
         return cxe + 0.5*l*numpy.linalg.norm(w)**2
-    return logreg_obj #non chiamo la funzione ma la torno soltanto, la chiamerà al suo interno fmin_l_bfgs_b
+    return logreg_obj 
 
 
 def QuadraticLogisticRegression(DTR, LTR, DTE, l): 
-    
-    #estensione dello spazio
-    DTR_exp = []
+    """Implementation of the quadratic logistic regression"""
+   
+    DTR_exp = [] 
     
     for i in range(DTR.shape[1]):
         x = DTR[:,i:i+1]
@@ -66,15 +60,15 @@ def balanced_logreg_obj_wrap(DTR, LTR, l,pi1):
         w = mcol(v[0:M])
         b = v[-1]
         S1 = numpy.dot(w.T, DTR1) + b
-        cxe1 = numpy.logaddexp(0, -S1).mean() #calcola log exp(0)=1 + log exp (-S*Z) per ogni elemento
+        cxe1 = numpy.logaddexp(0, -S1).mean()
         S0 = numpy.dot(w.T, DTR0) + b
-        cxe0 = numpy.logaddexp(0, -(S0*-1)).mean() #calcola log exp(0)=1 + log exp (-S*Z) per ogni elemento
+        cxe0 = numpy.logaddexp(0, -(S0*-1)).mean() 
         return pi1*cxe1+(1-pi1)*cxe0 + 0.5*l*numpy.linalg.norm(w)**2
-    return logreg_obj #non chiamo la funzione ma la torno soltanto, la chiamerà al suo interno fmin_l_bfgs_b
+    return logreg_obj 
         
 def BalancedQuadraticLogisticRegression(DTR, LTR, DTE, l,pi1): 
-
-    #estensione dello spazio
+    """Implementation of the balanced quadratic logistic regression"""
+    
     DTR_exp = []
 
     for i in range(DTR.shape[1]):

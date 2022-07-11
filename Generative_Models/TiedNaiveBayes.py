@@ -23,18 +23,22 @@ def compute_empirical_cov(D):
     C = numpy.dot(DC,DC.T) / D.shape[1]
     return C 
 
-def compute_sw(D,L): #within coviariance matrix
+def compute_sw(D,L): 
     SW = 0
     for i in [0,1]:
-        SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i]) #calcolo la matrice di covarianza C come in PCA però per tutte le classi all'interno del dataset
-        #(L==i).sum() = numero campioni per ogni classe = 50 
+        SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i])
     return SW / D.shape[1]  
 
 def TiedNaiveBayes(DTrain, LTrain, DTest):
+    """ Implementation of the Tied Naive Bayes Classifier
+        based on MVG version with log_densities
+        DTR and LTR are training data and labels
+        DTE are evaluation data
+        returns: the log-likelihood ratio
+    """
 
     h = {} 
 
-    #ct = sw = matrice di covarianza all'interno della classe
     Ct = compute_sw(DTrain, LTrain)
     I = numpy.eye(Ct.shape[0])
     Ct_naive_bayes = Ct * I 
