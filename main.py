@@ -740,7 +740,7 @@ if __name__ == '__main__':
         if FLAG_SHOW_FIGURES_END:
             lambda_list_plot = [1e-12, 1e-6, 1e-3,1]
             print("listMinDCF lenght: ", len(listMinDCF))
-            graphics.plotDCF(lambda_list_plot,listMinDCF,"λ Balanced Quadratic LR - KFold")
+            graphics.plotDCF(lambda_list_plot,listMinDCF,"lambda Balanced Quadratic LR - KFold")
    
     if FLAG_TESTING:
         print("testing")
