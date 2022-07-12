@@ -17,25 +17,31 @@ from GMM import gmm
 from Bayes_Decision_Model_Evaluation import BayesDecision
 from Preprocessing import Gaussianization
 
-FLAG_TRAINING= 1
-FLAG_TESTING= 0
+#at the end we have reset all the options to 0
 FLAG_SHOW_FIGURES_INIIT = 0
 FLAG_SHOW_FIGURES_END = 0
+
+FLAG_TRAINING= 0
+FLAG_TESTING= 0
+
 FLAG_CALIBRATION=0
 FLAG_FUSION=0
-FLAG_SINGLEFOLD= 1
+
+FLAG_SINGLEFOLD= 0
 FLAG_KFOLD= 0
-FLAG_BALANCING=0
+
 FLAG_GAUSSIANIZATION= 0
 FLAG_ZNORMALIZATION=0
-FLAG_PCA = 1
+FLAG_PCA = 0
 FLAG_LDA = 0
+
+FLAG_BALANCING=0
 FLAG_MVG = 0
 FLAG_NAIVE =0
 FLAG_TIED = 0
 FLAG_LOGISTIC = 0
-FLAG_SVM= 1
-FLAG_GMM= 1
+FLAG_SVM= 0
+FLAG_GMM= 0
 
 def vcol(v):
     return v.reshape((v.size,1))
@@ -68,6 +74,7 @@ def split_db_2to1(D, L, seed=0):
     """ Split the dataset in two parts, one is 2/3, the other is 1/3
         first part will be used for model training, second part for validation
         D is the dataset, L the corresponding labels
+        seed is set to 0 and it's used to randomize partitions
         returns:
         DTR_T = Dataset for training set
         LTR_T = Labels for training set
@@ -88,10 +95,10 @@ def split_db_2to1(D, L, seed=0):
 def k_fold(D, L, K, algorithm, params=None, seed=0):
     """ Implementation of the k-fold cross validation approach
         D is the dataset, L the labels, K the number of folds
-        pi1, Cfn, Cfp are the parameters of the application
         algorithm is the algorithm used as classifier
-        params are the additional parameters like hyperparameters
-        return the llr and labels
+        params are optional additional parameters like hyperparameters
+        seed is set to 0 and it's used to randomize partitions
+        return: llr and labels
     """
     sizePartitions = int(D.shape[1]/K)
     numpy.random.seed(seed)
@@ -190,24 +197,24 @@ if __name__ == '__main__':
     DTR0=DTR[:,LTR==0]
     DTR1=DTR[:,LTR==1]
     # 3 applications: main balanced one and two unbalanced 
-    applications = [[0.5,1,1]] 
+    applications = [[0.5,1,1],[0.1,1,1],[0.9,1,1]] 
 
     """Flag useful to generate graphics of the various attributes of our data set"""
     if FLAG_SHOW_FIGURES_INIIT:
         
         """plot histograms"""
-        #graphics.plot_hist(DTR, LTR, hFea)
+        graphics.plot_hist(DTR, LTR, hFea)
         
         """plot scatters"""
-        #graphics.plot_scatter(DTR, LTR, hFea)
+        graphics.plot_scatter(DTR, LTR, hFea)
         
         """Gaussianization of the data"""
         DTR_gauss = Gaussianization.Gaussianization(DTR)
         DTE_gauss= Gaussianization.Gaussianization(DTE)
         
         """plot gaussianization histograms"""
-        #graphics.plot_hist(DTR_gauss, LTR, hFea, "gauss")
-        #graphics.plot_hist(DTE_gauss, LTE, hFea, "DTE_gauss")
+        graphics.plot_hist(DTR_gauss, LTR, hFea, "gauss")
+        graphics.plot_hist(DTE_gauss, LTE, hFea, "DTE_gauss")
         
         """Znormalization of the data"""
         DTR_znorm = ZNormalization.ZNormalization(DTR)
@@ -221,8 +228,10 @@ if __name__ == '__main__':
         graphics.plot_heatmap(DTR, "global_correlation")
 
     if FLAG_TRAINING:
+        print("training")
         lambda_list = [0, 1e-6, 1e-3,1]
-        listMinDCF=[]
+        if FLAG_SHOW_FIGURES_END:
+            listMinDCF=[]
         
         if FLAG_SINGLEFOLD:
             print("Singlefold")
@@ -254,7 +263,7 @@ if __name__ == '__main__':
 
             for app in applications:
                 pi1, Cfn, Cfp = app
-                print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
+                print("Application: pi1 = %.1f, Cfn = %d, Cfp = %d" %(pi1, Cfn,Cfp))
             
                 if FLAG_MVG:
                     print("mvg")
@@ -401,14 +410,14 @@ if __name__ == '__main__':
                     for K_ in K_list:
                         for C in C_list:
                             for c in c_list:
-                            
+                                
                                 print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
                                 all_llrs = KernelSVM.svm_kernel_polynomial(DTR_T, LTR_T, DTR_V, K_, C, 2, c, 0, balanced = False)
                                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
-                                
+                            
                                 if FLAG_BALANCING:
                                     print("SVM Polynomial Kernel with balancing: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
                                     all_llrs = KernelSVM.svm_kernel_polynomial(DTR_T, LTR_T, DTR_V, K_, C, 2, c, 0.5, balanced = True)
@@ -416,28 +425,28 @@ if __name__ == '__main__':
                                     DCF_act = BayesDecision.compute_act_DCF(all_llrs, LTR_V, pi1, Cfn, Cfp)
                                     print("DCF min= ", DCF_min)
                                     print("DCF act = ", DCF_act)   
-                                    
+                                
                                 if FLAG_CALIBRATION:
                                     for l in lambda_list:
                                         print(" linear logistic regression with lamb ", l)
                                         cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs,LTR_V,all_llrs,l,0.5)
                                         DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
                                         print("DCF calibrated act = ", DCF_act)
-                            
+                    
                     K_list = [1,10]
                     C_list = [0.1,1,10]                 
                     g_list = [1,10]
                     for K_ in K_list:
                         for C in C_list:
                             for g in g_list:
-                            
+                                
                                 print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
                                 all_llrs1= KernelSVM.svm_kernel_RBF(DTR_T, LTR_T, DTR_V, K_, C, g, 0, balanced = False)
                                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs1, LTR_V, pi1, Cfn, Cfp)
                                 DCF_act = BayesDecision.compute_act_DCF(all_llrs1, LTR_V, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
-                                
+                               
                                 """
                                 #plot bayes error
                                 p = numpy.linspace(-3,3,21)
@@ -463,7 +472,7 @@ if __name__ == '__main__':
                                         cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(all_llrs1,LTR_V,all_llrs1,l,0.5)
                                         DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_V, pi1, Cfn, Cfp)
                                         print("DCF calibrated act = ", DCF_act)
-                                       
+                                
                 if FLAG_GMM:
                     psi = 0.01
                     M_list = [2,4,8] 
@@ -508,7 +517,7 @@ if __name__ == '__main__':
             print("K fold")
             for app in applications:
                 pi1, Cfn, Cfp = app
-                print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
+                print("Application: pi1 = %.1f, Cfn = %d, Cfp = %d" %(pi1, Cfn,Cfp))
             
                 if FLAG_MVG:
                     print("mvg")
@@ -654,6 +663,7 @@ if __name__ == '__main__':
                     for K_ in K_list:
                         for C in C_list:
                             for c in c_list:
+                                
                                 print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
                                 all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_polynomial, (K_,C, 2, c, 0) )
                                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
@@ -682,6 +692,7 @@ if __name__ == '__main__':
                     for K_ in K_list:
                         for C in C_list:
                             for g in g_list:
+                                
                                 print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
                                 all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.svm_kernel_RBF, (K_, C, g, 0) )
                                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
@@ -730,11 +741,12 @@ if __name__ == '__main__':
             lambda_list_plot = [1e-12, 1e-6, 1e-3,1]
             print("listMinDCF lenght: ", len(listMinDCF))
             graphics.plotDCF(lambda_list_plot,listMinDCF,"λ Balanced Quadratic LR - KFold")
-
+   
     if FLAG_TESTING:
         print("testing")
         lambda_list = [0, 1e-6, 1e-3, 1]
         listMinDCF=[]
+        """ we performed testing using 2/3 of the original training set for training, and the evaluation/test set for evaluating our choices"""
         if FLAG_SINGLEFOLD:
             print("Singlefold")
             (DTR, LTR), (DTR_V, LTR_V)=split_db_2to1(DTR,LTR)
@@ -765,7 +777,7 @@ if __name__ == '__main__':
             
             for app in applications:
                 pi1, Cfn, Cfp = app
-                print("Application: pi1 = %.1f, Cfn = %d, Cfn = %d" %(pi1, Cfn,Cfp))
+                print("Application: pi1 = %.1f, Cfn = %d, Cfp = %d" %(pi1, Cfn,Cfp))
             
                 if FLAG_MVG:
                     print("mvg")
