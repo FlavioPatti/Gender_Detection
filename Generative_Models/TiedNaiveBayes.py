@@ -16,61 +16,45 @@ def ML_GAU(D):
     C = numpy.dot(D-mu, (D-mu).T)/float(D.shape[1])
     return mu, C
 
+
 def compute_empirical_cov(D):
     mu = vcol(D.mean(1));
     DC = D-mu
     C = numpy.dot(DC,DC.T) / D.shape[1]
     return C 
 
-def compute_sw(D,L): #within coviariance matrix
+def compute_sw(D,L): 
     SW = 0
     for i in [0,1]:
-        SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i]) #calcolo la matrice di covarianza C come in PCA però per tutte le classi all'interno del dataset
-        #(L==i).sum() = numero campioni per ogni classe = 50 
+        SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i])
     return SW / D.shape[1]  
 
-def TiedNaiveBayes(DTrain, LTrain, DTest, LTest):
+def TiedNaiveBayes(DTrain, LTrain, DTest):
+    """ Implementation of the Tied Naive Bayes Classifier
+        based on MVG version with log_densities
+        DTR and LTR are training data and labels
+        DTE are evaluation data
+        returns: the log-likelihood ratio
+    """
 
     h = {} 
 
-    #ct = sw = matrice di covarianza all'interno della classe
     Ct = compute_sw(DTrain, LTrain)
     I = numpy.eye(Ct.shape[0])
     Ct_naive_bayes = Ct * I 
     
     for lab in [0,1]:
-    
-        mu, C = ML_GAU(DTrain[:, LTrain==lab]) 
+        mu = vcol(DTrain[:, LTrain==lab].mean(1)) 
         h[lab] = (mu, Ct_naive_bayes)
     
-    SJoint = numpy.zeros((3,DTest.shape[1])) 
-    logSJoint = numpy.zeros((3, DTest.shape[1]))
-    classPriors = [0.66/1.0, 0.33/1.0]
+    llr = numpy.zeros((2, DTest.shape[1]))
 
     for lab in [0,1]:
-        mu, C = h[lab]
+        mu, C_naive_bayes = h[lab]
+     
+        llr[lab, :] = logpdf_GAU_ND(DTest,mu, C_naive_bayes).ravel()
     
-        SJoint[lab, :] = numpy.exp(logpdf_GAU_ND(DTest,mu, C).ravel()) * classPriors[lab] 
-        logSJoint[lab, :] = logpdf_GAU_ND(DTest,mu, C).ravel() * classPriors[lab] 
     
-    SMarginal = SJoint.sum(0) 
-    logSMarginal = scipy.special.logsumexp(logSJoint, axis=0)
-
-    numpy.seterr(divide='ignore', invalid='ignore')
-    Post1 = SJoint/vrow(SMarginal)  
-    logPost = logSJoint - vrow(logSMarginal)
-    Post2 = numpy.exp(logPost)
-
-    numpy.seterr(divide='ignore', invalid='ignore')
-    err = ((numpy.abs(Post2-Post1))/Post1)
-
-    LPred1 = Post1.argmax(0) 
-    Lpred2 = Post2.argmax(0)
-
-    accuracy = (LTest==LPred1).sum()/DTest.shape[1]
-    print("Accuracy for the Tied Naive Bayes Classifier: ")
-    print("%.2f" % (100*accuracy) )
-
-    errore = 1 - accuracy
-    print("Error for the Tied Naive Bayes Classifier: ")
-    print("%.2f\n" % (100* errore) )
+    return llr[1]-llr[0]
+ 
+ 
