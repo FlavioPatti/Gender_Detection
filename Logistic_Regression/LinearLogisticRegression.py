@@ -53,21 +53,6 @@ def PriWeiLinearLogisticRegression(s,sl, S, lamb, pi1):
     Sfin = numpy.dot(_w.T, S) + _b - numpy.log(pi1/(1-pi1))
     return Sfin
 
-def FusionLinearLogisticRegression(s,sl, S,s1,sl1,S1, lamb, pi1):
-    """Implementation of the fusion of the scores of two different classifiers"""
-    
-    logreg_obj = pri_wei_logreg_obj_wrap(s, sl, lamb, pi1)
-    _v, _J, _d = scipy.optimize.fmin_l_bfgs_b(logreg_obj, numpy.zeros(2), approx_grad=True)
-    _w = _v[0]
-    _b = _v[-1]
-    
-    logreg_obj1 = pri_wei_logreg_obj_wrap(s1, sl1, lamb, pi1)
-    _v1, _J1, _d1 = scipy.optimize.fmin_l_bfgs_b(logreg_obj1, numpy.zeros(2), approx_grad=True)
-    _w1 = _v1[0]
-    _b1 = _v1[-1]
-    Sfin = numpy.dot(_w.T, S) + numpy.dot(_w1.T, S1) + _b +_b1
-    return Sfin
-
 def balanced_logreg_obj_wrap(DTR, LTR, l,pi1):
     DTR1=DTR[:,LTR==1]
     DTR0=DTR[:,LTR==0]

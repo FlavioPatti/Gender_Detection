@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
-import sklearn.datasets
 
 def mcol(v):
     return v.reshape((v.size,1))
@@ -9,144 +8,77 @@ def mcol(v):
 def mrow(v):
     return v.reshape((1,v.size))
 
-def polynomial_kernel(X1, X2, c, d, gamma):
-    """
-        Implementation of polynomial kernel function
-        k(X1, X2) = (X1.T @ X2 + C) ^ d
-        the parameter gamma is not used, it is for compatibility
-        with other kernel functions
-    """
-    return (np.dot(X1.T, X2) + c) ** d
-
-
-def RBF_kernel(X1, X2, c, d, gamma):
-    """
-        Implementeation of RBF kernel function
-        k(X1, X2) = e ^ (-gamma (norm(X1 - X2)) ^ 2)
-        the parameters c and d are not used, it is for compatibility
-        with other kernel functions
-    """
-    X1 = X1.T
-    X2 = X2.T
-    # return np.exp(-gamma*np.sum((X2-X1[:,np.newaxis])**2, axis=-1))
-
-    # optimized version using property of norm:
-    # ||X1-X2||^2 = ||X1||^2 + ||X2||^2 - 2 * X1.T * Y
-    X1_norm = np.sum(X1 ** 2, axis=-1)
-    X2_norm = np.sum(X2 ** 2, axis=-1)
-    return np.exp(-gamma * (X1_norm[:, None] + X2_norm[None, :] - 2 * np.dot(X1, X2.T)))
-
-
-def svm_dual_kernel_wrapper(DTR, LTR, kernel, K, c, d, gamma):
-    """
-        Wrapper for the svm_dual_kernel 
-        to pass to it the parameters DTR, LTR and K
-    """
-    def svm_dual_kernel(alpha):
-        """ 
-            Computes the dual SVM solution using kernel function
-            returns L_D_hat = - J_D_hat, and the gradient of L_D_hat
-        """
-        N = DTR.shape[1]
-
-        z = mcol(np.array(2 * LTR - 1))
-
-        # + K^2 (=Xi) for regularized bias in non-linear svm version
-        H_hat = z * z.T * (kernel(DTR, DTR, c, d, gamma) + K**2)
-
-        # J_D_hat = -1/2 * np.dot(np.dot(alpha.T, H_hat), alpha) + \
-        #     np.dot(alpha.T, np.ones(N))
-
-        # need to use multi_dot because it gives numerical problems otherwise
-        J_D_hat = -1/2 * np.linalg.multi_dot([alpha.T, H_hat, alpha]) + \
-            np.dot(alpha.T, np.ones(N))
-
-        L_D_hat = - J_D_hat
-        grad_L_D_hat = mcol(np.dot(H_hat, alpha) - np.ones(N))
-
-        return L_D_hat, grad_L_D_hat
-    return svm_dual_kernel
-
-
-
-def svm_kernel_polynomial(DTR, LTR, DTE, K, C, d=2, c=0, pi_T = 0, balanced = False):
-    """ Implementation of the svm classifier using polynomial kernel function """
-    N = DTR.shape[1]
-    # starting point
-    x0 = np.zeros(N)
-    bounds = []
-    if balanced == False:
-        for i in range(DTR.shape[1]):
-            bounds.append((0, C))
-    elif balanced == True:
-        N = LTR.size #tot number of samples
-        n_T = (1*(LTR==1)).sum() #num of samples belonging to the true class
-        n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
-        pi_emp_T = n_T / N
-        pi_emp_F = n_F / N
-        C_T = C * pi_T / pi_emp_T
-        C_F = C * (1-pi_T) / pi_emp_F 
-        for i in range(DTR.shape[1]):
-            if LTR[i] == 1:
-                bounds.append((0,C_T))
-            else:
-                bounds.append((0,C_F))
-
-    svm_dual_kernel = svm_dual_kernel_wrapper(
-        DTR, LTR, polynomial_kernel, K, c, d, 0)
-
-    x, f, d_ = scipy.optimize.fmin_l_bfgs_b(svm_dual_kernel, x0, factr=1.0, bounds=bounds)
-
-    # Compute scores of test samples
-    S = np.empty(DTE.shape[1])
-    z = mcol(np.array(2 * LTR - 1))
-
-    for t in range(DTE.shape[1]):
-        for i in range(N):
-            if(mcol(x)[i] > 0):
-                S[t] += mcol(x)[i] * z[i] * \
-                    (polynomial_kernel(DTR.T[i], DTE.T[t], c, d, 0) + K**2)
-    # + K^2 (=Xi) for regularized bias in non-linear svm version
+# Compute the kernel dot-product
+def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = ksi^2...... c = [0,1]... gamma = [1.0, 2.0]
+    """Implementation of kernels"""
     
-    return S.reshape(S.size,)
-
-
-
-def svm_kernel_RBF(DTR, LTR, DTE, K, C, g, pi_T, balanced = False):
-    """ Implementation of the svm classifier using RBF kernel function """
-    N = DTR.shape[1]
-    # starting point
-    x0 = np.zeros(N)
-    bounds = []
-    if balanced == False:
-        for i in range(DTR.shape[1]):
-            bounds.append((0, C))
-    elif balanced == True:
-        N = LTR.size #tot number of samples
-        n_T = (1*(LTR==1)).sum() #num of samples belonging to the true class
-        n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
-        pi_emp_T = n_T / N
-        pi_emp_F = n_F / N
-        C_T = C * pi_T / pi_emp_T
-        C_F = C * (1-pi_T) / pi_emp_F 
-        for i in range(DTR.shape[1]):
-            if LTR[i] == 1:
-                bounds.append((0,C_T))
-            else:
-                bounds.append((0,C_F))
-
-    svm_dual_kernel = svm_dual_kernel_wrapper(DTR, LTR, RBF_kernel, K, 0, 0, g)
+    if type == "poly":
+        # Polynomial kernel of degree d
+        return (np.dot(x1.T, x2) + c) ** d + csi**2
     
-    x, f, d_ = scipy.optimize.fmin_l_bfgs_b(svm_dual_kernel, x0, factr=1.0, bounds=bounds)
-
-    # Compute scores of test samples
-    S = np.empty(DTE.shape[1])
-    z = mcol(np.array(2 * LTR - 1))
-
-    for t in range(DTE.shape[1]):
-        for i in range(N):
-            if(mcol(x)[i] > 0):
-                S[t] += mcol(x)[i] * z[i] * (RBF_kernel(mcol(DTR.T[i]),
-                                                        mcol(DTE.T[t]), 0, 0, g) + K**2)
-    # + K^2 (=Xi) for regularized bias in non-linear svm version
+    elif type == "RBF":
+        # Radial Basic Function kernel
+        dist = mcol((x1**2).sum(0)) + mrow((x2**2).sum(0)) - 2 * np.dot(x1.T, x2)
+        k = np.exp(-gamma * dist) + csi**2
+        return k
+    
+ 
+def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = False):
+    """Implementation of the quadratic svm"""
+ 
+    x0 = np.zeros(DTR.shape[1])
+    d = 2
+    
+    
+    N = LTR.size #tot number of samples
+    n_T = (1*(LTR==1)).sum() #num of samples belonging to the true class
+    n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
+    pi_emp_T = n_T / N
+    pi_emp_F = n_F / N
+    
+    C_T = C * 0.5 / pi_emp_T
+    C_F = C * (1-0.5) / pi_emp_F 
+ 
+    bounds = [(0,1)] * LTR.size
+ 
+    if balanced == True:
+        
+        for i in range (LTR.size):
+            if (LTR[i]==1):
+                bounds[i] = (0,C_T)
+            else :
+                bounds[i] = (0,C_F)
+                
+    if balanced == False:
+        
+        for i in range (LTR.size):
+            bounds[i]=(0,C)
+    
+    Z = np.zeros(LTR.shape)
+    Z[LTR == 1] = 1
+    Z[LTR == 0] = -1
+ 
+    H = None
+ 
+    if type == "poly":
+        H = mcol(Z) * mrow(Z) * ((np.dot(DTR.T, DTR) + c) ** d + csi**2)  #type == poly
+    elif type == "RBF":
+        dist = mcol((DTR**2).sum(0)) + mrow((DTR**2).sum(0)) - 2 * np.dot(DTR.T, DTR)
+        H = np.exp(-gamma * dist) + csi**2
+        H = mcol(Z) * mrow(Z) * H
+ 
+    def JDual(alpha):
+        Ha = np.dot(H, alpha.T)
+        aHa = np.dot(alpha, Ha)
+        a1 = alpha.sum()
+        return 0.5 * aHa - a1, Ha - np.ones(alpha.size)
+    
+    def LDual(alpha):
+        loss, grad = JDual(alpha)
+        return loss, grad
+    
+    x,_,_ = scipy.optimize.fmin_l_bfgs_b(LDual, x0, factr=0.0, approx_grad=False, bounds=bounds, maxfun=100000, maxiter=100000)
+ 
+    #we are not able to compute the primal solution, but we can still compute the scores like that
+    S = np.sum((x*Z).reshape([DTR.shape[1],1]) * kernel(DTR, DTE, type, d, c, gamma, csi), axis=0)
     return S.reshape(S.size,)
