@@ -1,8 +1,6 @@
-"""
-   This module contains the implementation of the GMM algorithm for classification 
-"""
 import numpy as np
 import scipy.special as sps
+import utilities as ut
 
 def covariance_matrix2(D):
     """ Computes and returns the covariance matrix given the dataset D
@@ -12,7 +10,7 @@ def covariance_matrix2(D):
     mu = D.mean(1)
 
     # mu is a 1-D array, we need to reshape it to a column vector
-    mu = vcol(mu)
+    mu = ut.vcol(mu)
 
     # remove the mean from all the points
     DC = D - mu
@@ -38,16 +36,6 @@ def logpdf_GAU_ND(x, mu, C):
     return np.diag(first+second+third)
 
 
-def vcol(x):
-    """ Reshape the vector x into a column vector """
-    return x.reshape(x.shape[0], 1)
-
-
-def vrow(x):
-    """ Reshape the vector x into a row vector """
-    return x.reshape(1, x.shape[0])
-
-
 def logpdf_GMM(X, gmm):
     """ Computes the log-density of a gmm for a set of samples contained in 
         matrix X
@@ -68,9 +56,9 @@ def logpdf_GMM(X, gmm):
 
     for g in range(len(gmm)):
         for j, sample in enumerate(X.T):
-            sample = vcol(sample)
+            sample = ut.vcol(sample)
             # gmm[g][1] = mu_g, gmm[g][2] = C_g
-            S[g, j] = logpdf_GAU_ND(sample, vcol(gmm[g][1]), gmm[g][2])
+            S[g, j] = logpdf_GAU_ND(sample, ut.vcol(gmm[g][1]), gmm[g][2])
 
     # Add to each row of S the logarithm of the prior of the corresponding
     # component log w_g
@@ -122,9 +110,9 @@ def EM_algorithm(X, initial_gmm, psi=0.01, printDetails=False, version="full"):
 
         for g in range(M):  # for g in range(len(gmm)):
             for j, sample in enumerate(X.T):
-                sample = vcol(sample)
+                sample = ut.vcol(sample)
                 # gmm[g][1] = mu_g, gmm[g][2] = C_g
-                S[g, j] = logpdf_GAU_ND(sample, vcol(gmm[g][1]), gmm[g][2])
+                S[g, j] = logpdf_GAU_ND(sample, ut.vcol(gmm[g][1]), gmm[g][2])
 
         # Add to each row of S the logarithm of the prior of the corresponding
         # component log w_g
@@ -150,21 +138,21 @@ def EM_algorithm(X, initial_gmm, psi=0.01, printDetails=False, version="full"):
         Fg_list = []
         Sg_list = []
         for g in range(M):
-            Zg_list.append(vrow(responsabilities[g]).sum(axis=1))
-            Fg_list.append((vrow(responsabilities[g]) * X).sum(axis=1))
+            Zg_list.append(ut.vrow(responsabilities[g]).sum(axis=1))
+            Fg_list.append((ut.vrow(responsabilities[g]) * X).sum(axis=1))
             tmp = np.zeros((F, F))
             for i in range(N):
                 tmp += responsabilities[g][i] * \
-                    np.dot(vcol(X.T[i]), vrow(X.T[i]))
+                    np.dot(ut.vcol(X.T[i]), ut.vrow(X.T[i]))
             Sg_list.append(tmp)
 
         sum_covariances = np.zeros((F, F))  # used for tied covariance version
         # Obtain the new paramters
         for g in range(M):
             w_new = (Zg_list[g] / sum(Zg_list))[0]  # extract the float
-            mu_new = vcol(Fg_list[g] / Zg_list[g])
+            mu_new = ut.vcol(Fg_list[g] / Zg_list[g])
             sigma_new = (Sg_list[g] / Zg_list[g]) - \
-                np.dot(vcol(mu_new), vrow(mu_new))
+                np.dot(ut.vcol(mu_new), ut.vrow(mu_new))
 
             # diagonal version
             if(version == "diagonal"):
@@ -178,7 +166,7 @@ def EM_algorithm(X, initial_gmm, psi=0.01, printDetails=False, version="full"):
             # larger or equal to psi
             U, s, _ = np.linalg.svd(sigma_new)
             s[s < psi] = psi
-            sigma_new = np.dot(U, vcol(s) * U.T)
+            sigma_new = np.dot(U, ut.vcol(s) * U.T)
 
             gmm[g] = (w_new, mu_new, sigma_new)
 
@@ -215,7 +203,7 @@ def LBG_algorithm(X, gmm=None, goal_components=None, alpha=0.1, psi=0.01, printD
 
     if (gmm == None):
         # GMM_1 = [(w, mu, C)] = [(1.0, mu, C)] gaussian density
-        gmm = [(1.0, vcol(X.mean(1)), covariance_matrix2(X))]
+        gmm = [(1.0, ut.vcol(X.mean(1)), covariance_matrix2(X))]
 
     components = len(gmm)
 
@@ -224,7 +212,7 @@ def LBG_algorithm(X, gmm=None, goal_components=None, alpha=0.1, psi=0.01, printD
     for g in gmm:
         U, s, _ = np.linalg.svd(g[2])
         s[s < psi] = psi
-        g = (g[0], g[1], np.dot(U, vcol(s)*U.T))
+        g = (g[0], g[1], np.dot(U, ut.vcol(s)*U.T))
 
     if (goal_components == None):
         goal_components = components * 2
@@ -243,7 +231,7 @@ def LBG_algorithm(X, gmm=None, goal_components=None, alpha=0.1, psi=0.01, printD
             # g[2] is the covariance matrix
             U, s, _ = np.linalg.svd(g[2])
             s[s < psi] = psi
-            g = (g[0], g[1], np.dot(U, vcol(s)*U.T))
+            g = (g[0], g[1], np.dot(U, ut.vcol(s)*U.T))
 
             U, s, Vh = np.linalg.svd(g[2])
             d = U[:, 0:1] * s[0] ** 0.5 * alpha

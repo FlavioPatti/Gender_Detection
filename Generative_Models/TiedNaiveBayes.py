@@ -1,24 +1,18 @@
 import numpy 
-import scipy.special
-
-def vcol(v):
-    return v.reshape((v.size,1))
-
-def vrow(v):
-    return v.reshape((1,v.size))
+import utilities as ut
     
 def logpdf_GAU_ND(x,mu,C):
     P = numpy.linalg.inv(C)
     return -0.5*x.shape[0]* numpy.log(numpy.pi*2) + 0.5*numpy.linalg.slogdet(P)[1] - 0.5 * (numpy.dot(P, (x-mu)) *(x-mu)).sum(0)
 
 def ML_GAU(D):
-    mu = vcol(D.mean(1))
+    mu = ut.vcol(D.mean(1))
     C = numpy.dot(D-mu, (D-mu).T)/float(D.shape[1])
     return mu, C
 
 
 def compute_empirical_cov(D):
-    mu = vcol(D.mean(1));
+    mu = ut.vcol(D.mean(1))
     DC = D-mu
     C = numpy.dot(DC,DC.T) / D.shape[1]
     return C 
@@ -44,7 +38,7 @@ def TiedNaiveBayes(DTrain, LTrain, DTest):
     Ct_naive_bayes = Ct * I 
     
     for lab in [0,1]:
-        mu = vcol(DTrain[:, LTrain==lab].mean(1)) 
+        mu = ut.vcol(DTrain[:, LTrain==lab].mean(1)) 
         h[lab] = (mu, Ct_naive_bayes)
     
     llr = numpy.zeros((2, DTest.shape[1]))

@@ -1,14 +1,12 @@
 import numpy
 import matplotlib.pyplot as plt
-
-def vcol(v):
-    return v.reshape((v.size,1))
+import utilities as ut
 
 """Compute the PCA dimensionality reduction"""
 
 def PCA(DTR,DTE,m): 
     mu =DTR.mean(1) 
-    DC = DTR-vcol(mu)
+    DC = DTR-ut.vcol(mu)
     C = numpy.dot(DC,DC.T) / DTR.shape[1]
     s, U = numpy.linalg.eigh(C) 
       

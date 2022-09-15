@@ -1,12 +1,8 @@
 import numpy
 import matplotlib.pyplot as plt
 import scipy.optimize
+import utilities as ut
 
-def mcol(v):
-    return v.reshape((v.size,1))
-
-def mrow(v):
-    return v.reshape((1,v.size))
 
 def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
     """Implementation of the Linear SVM """
@@ -18,11 +14,11 @@ def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
     Z[LTR == 0] = -1
     
     H = numpy.dot(DTREXT.T, DTREXT)
-    H = mcol(Z)* mrow(Z) * H
+    H = ut.vcol(Z)* ut.vrow(Z) * H
     
     def JDual(alpha):
-        Ha = numpy.dot(H,mcol(alpha))
-        aHa = numpy.dot(mrow(alpha), Ha)
+        Ha = numpy.dot(H,ut.vcol(alpha))
+        aHa = numpy.dot(ut.vrow(alpha), Ha)
         a1 = alpha.sum()
         return -0.5* aHa.ravel() + a1, -Ha.ravel() + numpy.ones(alpha.size) 
                                        
@@ -31,7 +27,7 @@ def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
         return -loss, -grad 
     
     def JPrimal(w): 
-        S = numpy.dot(mrow(w), DTREXT) 
+        S = numpy.dot(ut.vrow(w), DTREXT) 
         loss = numpy.maximum(numpy.zeros(S.shape), 1-Z*S).sum()
         return 0.5 *numpy.linalg.norm(w)*2 + C * loss
     
@@ -57,11 +53,11 @@ def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
         LDual, numpy.zeros(DTR.shape[1]), bounds = bounds, factr = 0.0, maxiter = 100000, maxfun = 100000
     )
     
-    wStar = numpy.dot(DTREXT, mcol(alphaStar)*mcol(Z))
+    wStar = numpy.dot(DTREXT, ut.vcol(alphaStar)*ut.vcol(Z))
     
     DTEEXT = numpy.vstack([DTE, K* numpy.ones((1,DTE.shape[1] ))])    
      
-    S = numpy.dot(wStar.T, DTEEXT);
-    S = numpy.hstack(mrow(S))
+    S = numpy.dot(wStar.T, DTEEXT)
+    S = numpy.hstack(ut.vrow(S))
     
     return S

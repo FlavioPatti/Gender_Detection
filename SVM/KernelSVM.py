@@ -1,12 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
-
-def mcol(v):
-    return v.reshape((v.size,1))
-
-def mrow(v):
-    return v.reshape((1,v.size))
+import utilities as ut
 
 # Compute the kernel dot-product
 def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = ksi^2...... c = [0,1]... gamma = [1.0, 2.0]
@@ -18,7 +13,7 @@ def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = k
     
     elif type == "RBF":
         # Radial Basic Function kernel
-        dist = mcol((x1**2).sum(0)) + mrow((x2**2).sum(0)) - 2 * np.dot(x1.T, x2)
+        dist = ut.vcol((x1**2).sum(0)) + ut.vrow((x2**2).sum(0)) - 2 * np.dot(x1.T, x2)
         k = np.exp(-gamma * dist) + csi**2
         return k
     
@@ -61,11 +56,11 @@ def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced =
     H = None
  
     if type == "poly":
-        H = mcol(Z) * mrow(Z) * ((np.dot(DTR.T, DTR) + c) ** d + csi**2)  #type == poly
+        H = ut.vcol(Z) * ut.vrow(Z) * ((np.dot(DTR.T, DTR) + c) ** d + csi**2)  #type == poly
     elif type == "RBF":
-        dist = mcol((DTR**2).sum(0)) + mrow((DTR**2).sum(0)) - 2 * np.dot(DTR.T, DTR)
+        dist = ut.vcol((DTR**2).sum(0)) + ut.vrow((DTR**2).sum(0)) - 2 * np.dot(DTR.T, DTR)
         H = np.exp(-gamma * dist) + csi**2
-        H = mcol(Z) * mrow(Z) * H
+        H = ut.vcol(Z) * ut.vrow(Z) * H
  
     def JDual(alpha):
         Ha = np.dot(H, alpha.T)

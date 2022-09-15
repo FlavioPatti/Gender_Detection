@@ -1,22 +1,20 @@
 import numpy
 import matplotlib.pyplot as plt
 import scipy.linalg
-
-def vcol(v):
-    return v.reshape((v.size,1))
+import utilities as ut
 
 def compute_empirical_cov(D):
-    mu = vcol(D.mean(1));
+    mu = ut.vcol(D.mean(1))
     DC = D-mu
     C = numpy.dot(DC,DC.T) / D.shape[1]
     return C 
 
 def compute_sb(X,L): 
     SB = 0
-    muD = vcol(X.mean(1))
+    muD = ut.vcol(X.mean(1))
     for i in [0,1]: 
         D = X[:,L==i]
-        muC = vcol(D.mean(1)) 
+        muC = ut.vcol(D.mean(1)) 
         SB += D.shape[1] * numpy.dot((muC - muD), (muC - muD).T)
     return SB / X.shape[1]
         

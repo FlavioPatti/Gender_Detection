@@ -1,6 +1,6 @@
 import numpy
-import matplotlib.pyplot as plt
 
+import utilities as ut
 from Graphics import graphics
 from Preprocessing import pca
 from Preprocessing import lda
@@ -17,85 +17,45 @@ from GMM import gmm
 from Bayes_Decision_Model_Evaluation import BayesDecision
 from Preprocessing import Gaussianization
 
-#at the end we have reset all the options to 0
-FLAG_SHOW_FIGURES_INIT = 1
-FLAG_SHOW_FIGURES_END = 0
 
-FLAG_TRAINING= 1
-FLAG_TESTING= 0
+SHOW_FIGURES_INIT = 0
+SHOW_FIGURES_END = 0
 
-FLAG_CALIBRATION=0
-FLAG_BALANCING=0
-FLAG_FUSION=0
+TRAINING= 1
+TESTING= 0
 
-FLAG_SINGLEFOLD= 1
+CALIBRATION=0
+BALANCING=1
+FUSION=0
 
-FLAG_GAUSSIANIZATION= 0
-FLAG_ZNORMALIZATION=0
-FLAG_PCA = 0
-FLAG_LDA = 0
+SINGLEFOLD= 1
+KFOLD=0
 
-FLAG_MVG = 0
-FLAG_NAIVE =0
-FLAG_TIED = 0
-FLAG_LOGISTIC = 0
-FLAG_SVM= 0
-FLAG_GMM= 0
+GAUSSIANIZATION= 0
+ZNORMALIZATION=0
+PCA = 0
+LDA = 0
 
-def vcol(v):
-    return v.reshape((v.size,1))
+MVG = 0
+NAIVE=0
+MVG_TIED = 0
+NAIVE_TIED =0
 
-def vrow(v):
-    return v.reshape((1,v.size))
+LIN_LOGISTIC = 0
+QUAD_LOGISTIC = 0
 
-def load_train_and_test():  
-    DTR = []
-    LTR = []
-    f=open('data/Train.txt', encoding="ISO-8859-1")
-    for line in f:
-        line = line.strip().split(',')
-        sample = vcol(numpy.array(line[0:12], dtype=numpy.float32))
-        DTR.append(sample)
-        LTR.append(line[-1])
-    f.close()
-    DTE = []
-    LTE = []   
-    f=open('data/Test.txt', encoding="ISO-8859-1")
-    for line in f:
-        line = line.strip().split(',')
-        sample = vcol(numpy.array(line[0:12], dtype=numpy.float32))
-        DTE.append(sample)
-        LTE.append(line[-1])
-    f.close()
-    return numpy.hstack(DTR), numpy.array(LTR, dtype=numpy.int32), numpy.hstack(DTE), numpy.array(LTE, dtype=numpy.int32)  
+LIN_SVM= 1
+POL_SVM=1
+RBF_SVM=1
 
-def split_db_2to1(D, L, param, seed=0):
-    """ Split the dataset in two parts based on the param,
-        first part will be used for model training, second part for validation
-        D is the dataset, L the corresponding labels
-        seed is set to 0 and it's used to randomize partitions
-        returns:
-        DTR_TRA = Dataset for training set
-        LTR_TRA = Labels for training set
-        DTR_TEST = Dataset for validation set
-        LTR_TEST = Labels for validation set
-    """
-    nTrain = int(D.shape[1]*param)
-    numpy.random.seed(seed)
-    idx = numpy.random.permutation(D.shape[1])
-    idxTrain = idx[0:nTrain]
-    idxVal = idx[nTrain:]
-    DTR_TRA = D[:, idxTrain]
-    DTR_TEST = D[:, idxVal]
-    LTR_TRA = L[idxTrain]
-    LTR_TEST = L[idxVal]
-    return (DTR_TRA, LTR_TRA), (DTR_TEST, LTR_TEST)
-
+FULL_GMM= 1
+DIAG_GMM= 1
+TIED_GMM= 1
 
 if __name__ == '__main__':
 
     #load data
-    DTR, LTR, DTE, LTE = load_train_and_test()
+    DTR, LTR, DTE, LTE = ut.load_train_and_test()
     print("Total sample of training set: ", DTR.shape[1] )
     print("Total sample of test set: ", DTE.shape[1] )
     
@@ -123,11 +83,11 @@ if __name__ == '__main__':
     DTR0=DTR[:,LTR==0]
     DTR1=DTR[:,LTR==1]
     
-    # 3 applications: main balanced one and two unbalanced 
+    # 3 applications: the main balanced and the other two unbalanced 
     applications = [[0.5,1,1],[0.1,1,1],[0.9,1,1]]
 
     """Flag useful to generate graphics of the various attributes of our data set"""
-    if FLAG_SHOW_FIGURES_INIT:
+    if SHOW_FIGURES_INIT:
         
         """plot histograms"""
         graphics.plot_hist(DTR, LTR, hFea)
@@ -156,42 +116,42 @@ if __name__ == '__main__':
         graphics.plot_heatmap(DTR1, "female_class_correlation")
         graphics.plot_heatmap(DTR, "global_correlation")
 
-    if FLAG_TRAINING:
+    if TRAINING:
         print("training")
         lambda_list = [0, 1e-6, 1e-3,1]
-        if FLAG_SHOW_FIGURES_END:
+        if SHOW_FIGURES_END:
             listMinDCF=[]
         
-        if FLAG_SINGLEFOLD:
+        if SINGLEFOLD:
             print("Singlefold")
             
             """We decide to split our data in 50% training, 30% validation and 20% testing"""
-            (DTR_TRA, LTR_TRA), (DTR_TEST, LTR_TEST)=split_db_2to1(DTR,LTR,0.8)
-            (DTR_TRA, LTR_TRA), (DTR_V,LTR_V) = split_db_2to1(DTR_TRA, LTR_TRA,0.625)
+            (DTR_TRA, LTR_TRA), (DTR_TEST, LTR_TEST)=ut.split_db_2to1(DTR,LTR,0.8)
+            (DTR_TRA, LTR_TRA), (DTR_V,LTR_V) = ut.split_db_2to1(DTR_TRA, LTR_TRA,0.625)
             sample_class0 = (LTR_TRA==0).sum()
             print("Sample of class 0: ", sample_class0)
             sample_class1 = (LTR_TRA==1).sum()
             print("Sample of class 1: ", sample_class1, "\n")
 
-            if FLAG_GAUSSIANIZATION:
+            if GAUSSIANIZATION:
                 DTR_TEST = Gaussianization.Gaussianization(DTR_TRA,DTR_TEST)
                 DTR_V = Gaussianization.Gaussianization(DTR_TRA,DTR_V)
                 DTR_TRA = Gaussianization.Gaussianization(DTR_TRA,DTR_TRA)
                 print("Gaussianization")
 
-            if FLAG_ZNORMALIZATION:
+            if ZNORMALIZATION:
                 DTR_TEST = ZNormalization.ZNormalization(DTR_TRA,DTR_TEST)
                 DTR_V = ZNormalization.ZNormalization(DTR_TRA,DTR_V)
                 DTR_TRA = ZNormalization.ZNormalization(DTR_TRA,DTR_TRA)
                 print("Z-normalization")   
                  
-            if FLAG_PCA:
+            if PCA:
                 DTR_TEST=pca.PCA(DTR_TRA, DTR_TEST, 7)
                 DTR_V=pca.PCA(DTR_TRA, DTR_V, 7)
                 DTR_TRA=pca.PCA(DTR_TRA, DTR_TRA, 7)
                 print("PCA dimensionality: ",DTR_TRA.shape)
 
-            if FLAG_LDA:
+            if LDA:
                 DTR_TEST=lda.LDA(DTR_TRA, LTR_TRA,DTR_TEST, 1)
                 DTR_V=lda.LDA(DTR_TRA, LTR_TRA,DTR_V, 1)
                 DTR_TRA=lda.LDA(DTR_TRA, LTR_TRA,DTR_TRA, 1)
@@ -201,7 +161,7 @@ if __name__ == '__main__':
                 pi1, Cfn, Cfp = app
                 print("Application: pi1 = %.1f, Cfn = %d, Cfp = %d" %(pi1, Cfn,Cfp))
             
-                if FLAG_MVG:
+                if MVG:
                     print("mvg")
                     test_llrs = MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR_TRA, LTR_TRA, DTR_TEST)
                     DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -209,7 +169,7 @@ if __name__ == '__main__':
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
                     
-                    if FLAG_CALIBRATION:
+                    if CALIBRATION:
                         for l in lambda_list:
                             print(" calibration with logistic regression with lamb ", l)
                             tra_llrs = MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR_TRA, LTR_TRA, DTR_V)
@@ -217,7 +177,7 @@ if __name__ == '__main__':
                             DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             print("DCF calibrated act = ", DCF_act)
                     
-                if FLAG_NAIVE:
+                if NAIVE:
                     print("naive")
                     test_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR_TRA, LTR_TRA, DTR_TEST)
                     DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -225,7 +185,7 @@ if __name__ == '__main__':
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
                     
-                    if FLAG_CALIBRATION:
+                    if CALIBRATION:
                         for l in lambda_list:
                             print(" calibration with logistic regression with lamb ", l)
                             tra_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR_TRA, LTR_TRA, DTR_V)
@@ -233,7 +193,7 @@ if __name__ == '__main__':
                             DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             print("DCF calibrated act = ", DCF_act)
 
-                if FLAG_TIED:
+                if MVG_TIED:
                     print("tied gaussian")
                     test_llrs = TiedGaussianClassifier.TiedGaussianClassifier(DTR_TRA, LTR_TRA, DTR_TEST)
                     DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -241,14 +201,15 @@ if __name__ == '__main__':
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
                     
-                    if FLAG_CALIBRATION:
+                    if CALIBRATION:
                         for l in lambda_list:
                             print(" calibration with logistic regression with lamb ", l)
                             tra_llrs = TiedGaussianClassifier.TiedGaussianClassifier(DTR_TRA, LTR_TRA, DTR_V)
                             cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
                             DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             print("DCF calibrated act = ", DCF_act)
-                            
+
+                if NAIVE_TIED:            
                     print("tied naive")
                     test_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR_TRA, LTR_TRA, DTR_TEST)
                     DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -256,7 +217,7 @@ if __name__ == '__main__':
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
                     
-                    if FLAG_CALIBRATION:
+                    if CALIBRATION:
                         for l in lambda_list:
                             print(" calibration with logistic regression with lamb ", l)
                             tra_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR_TRA, LTR_TRA, DTR_V)
@@ -264,7 +225,7 @@ if __name__ == '__main__':
                             DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             print("DCF calibrated act = ", DCF_act)
 
-                if FLAG_LOGISTIC:
+                if LIN_LOGISTIC:
                     for l in lambda_list:
                     
                         print(" linear logistic regression with lamb ", l)
@@ -275,7 +236,7 @@ if __name__ == '__main__':
                         print("DCF act = ", DCF_act)
                        # listMinDCF.append(DCF_min)
                         
-                        if FLAG_CALIBRATION:
+                        if CALIBRATION:
                             for l2 in lambda_list:
                                 print(" calibration with logistic regression with lamb ", l2)
                                 tra_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR_TRA, LTR_TRA, DTR_V,l)
@@ -283,16 +244,18 @@ if __name__ == '__main__':
                                 DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                                 print("DCF calibrated act = ", DCF_act)
                         
-                        if FLAG_BALANCING:
+                        if BALANCING:
                             print(" balancing of the linear logistic regression with lamb ", l)
-                            test_llrs = LinearLogisticRegression.BalancedLinearLogisticRegression(DTR_TRA, LTR_TRA, DTR_TEST, l,0.5)
+                            test_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR_TRA, LTR_TRA, DTR_TEST, l, True, 0.5)
                             DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
                             #listMinDCF.append(DCF_min)
                             
-                        
+                if QUAD_LOGISTIC:
+                    for l in lambda_list:
+
                         print(" quadratic logistic regression with lamb ", l)
                         test_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA, LTR_TRA, DTR_TEST, l)
                         DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -312,7 +275,7 @@ if __name__ == '__main__':
                         plt.show()
                         """
                         
-                        if FLAG_CALIBRATION:
+                        if CALIBRATION:
                             for l2 in lambda_list:
                                 print(" calibration with logistic regression with lamb ", l2)
                                 tra_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA, LTR_TRA, DTR_V, l)
@@ -331,9 +294,9 @@ if __name__ == '__main__':
                                 plt.show()
                                 """
                                 
-                        if FLAG_BALANCING:
+                        if BALANCING:
                             print(" balancing of the quadratic logistic regression with lamb ", l)
-                            test_llrs = QuadraticLogisticRegression.BalancedQuadraticLogisticRegression(DTR_TRA, LTR_TRA, DTR_TEST, l,0.5)
+                            test_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA, LTR_TRA, DTR_TEST, l,True,0.5)
                             DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
@@ -341,7 +304,7 @@ if __name__ == '__main__':
                            # listMinDCF.append(DCF_min)
                         
                                 
-                if FLAG_SVM:
+                if LIN_SVM:
                     
                     K_list = [1, 10]
                     C_list = [1e-3, 0.1, 1]
@@ -355,7 +318,7 @@ if __name__ == '__main__':
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
                             
-                            if FLAG_BALANCING:
+                            if BALANCING:
                                 print("SVM Linear with balancing: K = %f, C = %f" % (K_,C), "\n")
                                 test_llrs = LinearSVM.train_SVM_linear(DTR_TRA, LTR_TRA, DTR_TEST, C, K_, 0.5, balanced= True)  
                                 DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -363,14 +326,14 @@ if __name__ == '__main__':
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
                             
-                            if FLAG_CALIBRATION:
+                            if CALIBRATION:
                                 for l in lambda_list:
                                     print(" calibration with logistic regression with lamb ", l)
                                     tra_llrs = LinearSVM.train_SVM_linear(DTR_TRA, LTR_TRA, DTR_V, C, K_, 0.5, balanced= True)
                                     cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
                                     DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                                     print("DCF calibrated act = ", DCF_act)
-                        
+                if POL_SVM:        
                     K_list = [1]
                     C_list = [1e-5,1e-4,1e-3,1e-2,1e-1]       
                     c_list = [0,1,10,30]
@@ -385,7 +348,7 @@ if __name__ == '__main__':
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
                                 
-                                if FLAG_BALANCING:
+                                if BALANCING:
                                     print("SVM Polynomial Kernel with balancing: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
                                     test_llrs = KernelSVM.quad_kernel_svm(DTR_TRA, LTR_TRA, DTR_TEST, C, c, 0, K_, "poly", balanced = True)
                                     DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
@@ -394,7 +357,7 @@ if __name__ == '__main__':
                                     print("DCF act = ", DCF_act)
                                     listMinDCF.append(DCF_min)   
                                 
-                                if FLAG_CALIBRATION:
+                                if CALIBRATION:
                                     for l in lambda_list:
                                         print(" calibration with logistic regression with lamb ", l)
                                         tra_llrs = KernelSVM.quad_kernel_svm(DTR_TRA, LTR_TRA, DTR_V, C, c, 0, K_, "poly", balanced = True)
@@ -402,8 +365,7 @@ if __name__ == '__main__':
                                         DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                                         print("DCF calibrated act = ", DCF_act)
                      
-                    
-                           
+                if RBF_SVM:       
                     K_list = [1]
                     C_list = [0.001,0.01,0.1,1,10,100,1000]                 
                     g_list = [1e-5,1e-4,1e-3,1e-2]
@@ -419,7 +381,7 @@ if __name__ == '__main__':
                                 print("DCF act = ", DCF_act)
                                 #listMinDCF.append(DCF_min)
                                 
-                                if FLAG_BALANCING:
+                                if BALANCING:
                                     print("SVM RBF Kernel with balancing: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
                                     test_llrs1 = KernelSVM.quad_kernel_svm(DTR_TRA, LTR_TRA, DTR_TEST, C, 0, g, K_, "RBF", balanced = True)
                                     DCF_min =  BayesDecision.compute_min_DCF(test_llrs1, LTR_TEST, pi1, Cfn, Cfp)
@@ -428,42 +390,77 @@ if __name__ == '__main__':
                                     print("DCF act = ", DCF_act)
                                     listMinDCF.append(DCF_min)
                                 
-                                if FLAG_CALIBRATION:
+                                if CALIBRATION:
                                     for l in lambda_list:
                                         print(" calibration with logistic regression with lamb ", l)
                                         tra_llrs = KernelSVM.quad_kernel_svm(DTR_TRA, LTR_TRA, DTR_V, C, 0, g, K_, "RBF", balanced = True)
                                         cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
                                         DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
                                         print("DCF calibrated act = ", DCF_act)
-                    
-                    
-                if FLAG_GMM:
+                        
+                if FULL_GMM:
                     psi = 0.01
                     M_list = [2,4,8] 
-                    versions = ["full","diagonal","tied"]
-                    for version in versions:
-                        for M in M_list:
-                           
-                            print("GMM version = %s, M = %d, psi = %f" % (version, M, psi), "\n")
-                            test_llrs= gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_TEST, M, psi, version) 
-                            DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
-                            DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
-                            print("DCF min= ", DCF_min)
-                            print("DCF act = ", DCF_act)
-                            
-                            if FLAG_CALIBRATION:
-                                for l in lambda_list:
-                                    print(" calibration with logistic regression with lamb ", l)
-                                    tra_llrs = gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_V, M, psi, version)
-                                    cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
-                                    DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
-                                    print("DCF calibrated act = ", DCF_act)  
-                            
+                    for M in M_list:
+                        
+                        print("GMM version = %s, M = %d, psi = %f" % ("full", M, psi), "\n")
+                        test_llrs= gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_TEST, M, psi, "full") 
+                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+                        
+                        if CALIBRATION:
+                            for l in lambda_list:
+                                print(" calibration with logistic regression with lamb ", l)
+                                tra_llrs = gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_V, M, psi, "full")
+                                cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
+                                DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                                print("DCF calibrated act = ", DCF_act)  
+
+                if DIAG_GMM:
+                    psi = 0.01
+                    M_list = [2,4,8] 
+                    for M in M_list:
+                        
+                        print("GMM version = %s, M = %d, psi = %f" % ("diagonal", M, psi), "\n")
+                        test_llrs= gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_TEST, M, psi, "diagonal") 
+                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+                        
+                        if CALIBRATION:
+                            for l in lambda_list:
+                                print(" calibration with logistic regression with lamb ", l)
+                                tra_llrs = gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_V, M, psi, "diagonal")
+                                cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
+                                DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                                print("DCF calibrated act = ", DCF_act)            
                 
+                if TIED_GMM:
+                    psi = 0.01
+                    M_list = [2,4,8] 
+                    for M in M_list:
+                        
+                        print("GMM version = %s, M = %d, psi = %f" % ("tied", M, psi), "\n")
+                        test_llrs= gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_TEST, M, psi, "tied") 
+                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                        print("DCF min= ", DCF_min)
+                        print("DCF act = ", DCF_act)
+                        
+                        if CALIBRATION:
+                            for l in lambda_list:
+                                print(" calibration with logistic regression with lamb ", l)
+                                tra_llrs = gmm.GMM_classifier(DTR_TRA, LTR_TRA, DTR_V, M, psi, "tied")
+                                cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
+                                DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTR_TEST, pi1, Cfn, Cfp)
+                                print("DCF calibrated act = ", DCF_act)
                      
                 """Fusion of our best models: Balanced SVM Linear K=1, C=0.1 with PCA=7 and Z-Normalized Quadratic LR with lambda=1e-3"""     
                 
-                if FLAG_FUSION:
+                if FUSION:
                     """First model"""
                     
                     DTR_TEST1=pca.PCA(DTR_TRA, DTR_TEST, 7)
@@ -512,152 +509,35 @@ if __name__ == '__main__':
               
             """plot of the minDCF at the end of the computation"""
             """
-            if FLAG_SHOW_FIGURES_END:
+            if SHOW_FIGURES_END:
                 lambda_list_plot = [1e-12, 1e-6, 1e-3,1]
                 print("listMinDCF lenght: ", len(listMinDCF))
                 graphics.plotDCFprior(lambda_list_plot,listMinDCF,"lambda Balanced Linear LR")
             """
             """
-            if FLAG_SHOW_FIGURES_END:
+            if SHOW_FIGURES_END:
                 C_list_plot=[1e-5,1e-4,1e-3,1e-2,1e-1]
                 print("listMinDCF lenght: ", len(listMinDCF))
                 graphics.plotDCFc(C_list_plot,listMinDCF,"C Balanced SVM polynomial kernel")
             """
             """
-            if FLAG_SHOW_FIGURES_END:
+            if SHOW_FIGURES_END:
                 C_list_plot=[0.001,0.01,0.1,1,10,100,1000]
                 print("listMinDCF lenght: ", len(listMinDCF))
                 graphics.plotDCFg(C_list_plot,listMinDCF,"C Balanced SVM RBF kernel")
             """
             
-    if FLAG_TESTING:
+    if TESTING:
         print("testing")
         lambda_list = [0, 1e-6, 1e-3, 1]
         listMinDCF=[]
         
         """ we performed testing using 1/2 of the original training set for training, and the evaluation/test set for evaluating our choices"""
-        if FLAG_SINGLEFOLD:
+        if SINGLEFOLD:
             print("Singlefold")
-            (DTR_TRA, LTR_TRA), (DTR_V,LTR_V) = split_db_2to1(DTR, LTR,0.5)
+            (DTR_TRA, LTR_TRA), (DTR_V,LTR_V) = ut.split_db_2to1(DTR, LTR,0.5)
             sample_class0 = (LTR==0).sum()
             print("Sample of class 0: ", sample_class0)
             sample_class1 = (LTR==1).sum()
             print("Sample of class 1: ", sample_class1, "\n")
-            if FLAG_GAUSSIANIZATION:
-                DTE = Gaussianization.Gaussianization(DTR_TRA,DTE)
-                DTR_V = Gaussianization.Gaussianization(DTR_TRA,DTR_V)
-                DTR_TRA = Gaussianization.Gaussianization(DTR_TRA,DTR_TRA)
-                print("Gaussianization")
-
-            if FLAG_ZNORMALIZATION:
-                DTE = ZNormalization.ZNormalization(DTR_TRA,DTE)
-                DTR_V = ZNormalization.ZNormalization(DTR_TRA,DTR_V)
-                DTR_TRA = ZNormalization.ZNormalization(DTR_TRA,DTR_TRA)
-                print("Z-normalization")   
-                 
-            if FLAG_PCA:
-                DTE=pca.PCA(DTR_TRA, DTE, 7)
-                DTR_V=pca.PCA(DTR_TRA, DTR_V, 7)
-                DTR_TRA=pca.PCA(DTR_TRA, DTR_TRA, 7)
-                print("PCA dimensionality: ",DTR_TRA.shape)
-
-            if FLAG_LDA:
-                DTE=lda.LDA(DTR_TRA, LTR_TRA,DTE, 1)
-                DTR_V=lda.LDA(DTR_TRA, LTR_TRA,DTR_V, 1)
-                DTR_TRA=lda.LDA(DTR_TRA, LTR_TRA,DTR_TRA, 1)
-                print("LDA dimensionality: ",DTR_TRA.shape)
-
-            for app in applications:
-                pi1, Cfn, Cfp = app
-                print("Application: pi1 = %.1f, Cfn = %d, Cfp = %d" %(pi1, Cfn,Cfp))
-                
-                """testing our best models with other kind of data"""
-                
-                if FLAG_LOGISTIC:
-                    for l in lambda_list:        
-                        print(" quadratic logistic regression with lamb ", l)
-                        test_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA, LTR_TRA, DTE, l)
-                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        print("DCF min= ", DCF_min)
-                        print("DCF act = ", DCF_act)
-                        # listMinDCF.append(DCF_min)
-                    
-                        if FLAG_CALIBRATION:
-                            for l2 in lambda_list:
-                                print(" calibration with logistic regression with lamb ", l2)
-                                tra_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA, LTR_TRA, DTR_V, l)
-                                cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l2,0.5)
-                                DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                                print("DCF calibrated act = ", DCF_act)
-                        
-                                
-                if FLAG_SVM:
-                    K_list = [1,10]
-                    C_list = [1e-3,0.1, 1]
-                    for K_ in K_list:
-                        for C in C_list:  
-                            if FLAG_BALANCING:
-                                print("SVM Linear with balancing: K = %f, C = %f" % (K_,C), "\n")
-                                test_llrs = LinearSVM.train_SVM_linear(DTR_TRA, LTR_TRA, DTE, C, K_, 0.5, balanced= True)  
-                                DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                                DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                                print("DCF min= ", DCF_min)
-                                print("DCF act = ", DCF_act)
-                                
-                            if FLAG_CALIBRATION:
-                                for l in lambda_list:
-                                    print(" calibration with logistic regression with lamb ", l)
-                                    tra_llrs = LinearSVM.train_SVM_linear(DTR_TRA, LTR_TRA, DTR_V, C, K_, 0.5, balanced= True)
-                                    cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
-                                    DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                                    print("DCF calibrated act = ", DCF_act)                 
-                                   
-                """Fusion of the SVM RBF and GMM"""     
-                
-                if FLAG_FUSION:
-                    """First model"""
-                    
-                    DTE1=pca.PCA(DTR_TRA, DTE, 7)
-                    DTR_V1=pca.PCA(DTR_TRA, DTR_V, 7)
-                    DTR_TRA1=pca.PCA(DTR_TRA, DTR_TRA, 7)
-                    print("PCA dimensionality: ",DTR_TRA.shape)
-                    
-                    print("SVM Linear with balancing: K = %f, C = %f" % (1,0.1), "\n")
-                    test_llrs1 = LinearSVM.train_SVM_linear(DTR_TRA1, LTR_TRA, DTE1, 0.1, 1, 0.5, balanced= True)  
-                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs1, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(test_llrs1, LTE, pi1, Cfn, Cfp)
-                    print("DCF min= ", DCF_min)
-                    print("DCF act = ", DCF_act)
-                        
-                    """Second model"""
-                    
-                    DTE2 = ZNormalization.ZNormalization(DTR_TRA,DTE)
-                    DTR_V2 = ZNormalization.ZNormalization(DTR_TRA,DTR_V)
-                    DTR_TRA2 = ZNormalization.ZNormalization(DTR_TRA,DTR_TRA)
-                    print("Z-normalization")  
-                    
-                    print(" quadratic logistic regression with lamb ", 1e-3)
-                    test_llrs2 = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA2, LTR_TRA, DTE2, 1e-3)
-                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs2, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(test_llrs2, LTE, pi1, Cfn, Cfp)
-                    print("DCF min= ", DCF_min)
-                    print("DCF act = ", DCF_act)
-                    
-                    
-                    test_llrs_stacked=numpy.vstack((test_llrs1,test_llrs2))
-                    print(test_llrs_stacked.shape)
-                    
-                    tra_llrs1 = LinearSVM.train_SVM_linear(DTR_TRA1, LTR_TRA, DTR_V1, 0.1, 1, 0.5, balanced= True) 
-                    tra_llrs2 = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR_TRA2, LTR_TRA, DTR_V2, 1e-3) 
-               
-                    tra_llrs_stacked=numpy.vstack((tra_llrs1,tra_llrs2))
-                    print(tra_llrs_stacked.shape)
-                    print("fusion")
-                    fus_llrs= LinearLogisticRegression.BalancedLinearLogisticRegression(tra_llrs_stacked,LTR_V,test_llrs_stacked, 1e-03,0.5)
-                    print(fus_llrs.shape)
-                    DCF_min =  BayesDecision.compute_min_DCF(fus_llrs, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(fus_llrs, LTE, pi1, Cfn, Cfp)
-                    print("DCF min= ", DCF_min)
-                    print("DCF act = ", DCF_act)
-
+            
