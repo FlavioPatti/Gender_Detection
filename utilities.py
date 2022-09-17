@@ -50,3 +50,4 @@ def split_db_2to1(D, L, param, seed=0):
     LTR_TRA = L[idxTrain]
     LTR_TEST = L[idxVal]
     return (DTR_TRA, LTR_TRA), (DTR_TEST, LTR_TEST)
+
