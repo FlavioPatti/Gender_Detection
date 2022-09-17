@@ -8,5 +8,5 @@ import utilities as ut
 def ZNormalization(DTR,DTE):
     mean = DTR.mean(axis=1)
     standardDeviation = DTR.std(axis=1)
-    ZD = (DTE-ut.mcol(mean))/ut.mcol(standardDeviation)
+    ZD = (DTE-ut.vcol(mean))/ut.vcol(standardDeviation)
     return ZD

@@ -25,32 +25,32 @@ TRAINING= 1
 TESTING= 0
 
 CALIBRATION=0
-BALANCING=1
+BALANCING=0
 FUSION=0
 
-SINGLEFOLD= 1
-KFOLD=0
+SINGLEFOLD= 0
+KFOLD=1
 
 GAUSSIANIZATION= 0
 ZNORMALIZATION=0
-PCA = 0
+PCA = 1
 LDA = 0
 
-MVG = 0
-NAIVE=0
-MVG_TIED = 0
-NAIVE_TIED =0
+MVG = 1
+NAIVE=1
+MVG_TIED = 1
+NAIVE_TIED =1
 
 LIN_LOGISTIC = 0
 QUAD_LOGISTIC = 0
 
-LIN_SVM= 1
-POL_SVM=1
-RBF_SVM=1
+LIN_SVM= 0
+POL_SVM=0
+RBF_SVM=0
 
-FULL_GMM= 1
-DIAG_GMM= 1
-TIED_GMM= 1
+FULL_GMM= 0
+DIAG_GMM= 0
+TIED_GMM= 0
 
 def k_fold(D, L, K, algorithm, params=None, seed=0):
     """ Implementation of the k-fold cross validation approach
@@ -102,8 +102,8 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
                 print("Z-normalization")
             
         if PCA:
-            DTE=pca.PCA(DTR, DTE, 11)
-            DTR=pca.PCA(DTR, DTR, 11)
+            DTE=pca.PCA(DTR, DTE, 10)
+            DTR=pca.PCA(DTR, DTR, 10)
             print("PCA dimensionality: ",DTR.shape)
 
         if LDA:
@@ -139,18 +139,18 @@ if __name__ == '__main__':
     print("Total sample of class 1 for test set: ", (LTE==1).sum())
     
     hFea = {
-        0: 'Feature 0',
-        1: 'Feature 1',
-        2: 'Feature 2',
-        3: 'Feature 3',
-        4: 'Feature 4',
-        5: 'Feature 5',
-        6: 'Feature 6',
-        7: 'Feature 7',
-        8: 'Feature 8',
-        9: 'Feature 9',
-        10: 'Feature 10',
-        11: 'Feature 11'
+        0: 'Feature 1',
+        1: 'Feature 2',
+        2: 'Feature 3',
+        3: 'Feature 4',
+        4: 'Feature 5',
+        5: 'Feature 6',
+        6: 'Feature 7',
+        7: 'Feature 8',
+        8: 'Feature 9',
+        9: 'Feature 10',
+        10: 'Feature 11',
+        11: 'Feature 12'
         }
     
     DTR0=DTR[:,LTR==0]
@@ -209,32 +209,32 @@ if __name__ == '__main__':
                 if MVG:
                     print("mvg")
                     all_llrs, all_labels = k_fold(DTR, LTR, K, MultivariateGaussianClassifier.MultivariateGaussianClassifier)
-                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
                     
                 if NAIVE:
                     print("naive")
-                    test_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR, LTR, DTE)
-                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                    all_llrs, all_labels = k_fold(DTR, LTR, K, NaiveBayesClassifier.NaiveBayesClassifier)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
 
                 if MVG_TIED:
                     print("tied gaussian")
-                    test_llrs = TiedGaussianClassifier.TiedGaussianClassifier(DTR, LTR, DTE)
-                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                    all_llrs, all_labels = k_fold(DTR, LTR, K, TiedGaussianClassifier.TiedGaussianClassifier)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
 
                 if NAIVE_TIED:            
                     print("tied naive")
-                    test_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR, LTR, DTE)
-                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                    DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                    all_llrs, all_labels = k_fold(DTR, LTR, K, TiedNaiveBayes.TiedNaiveBayes)
+                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
 
