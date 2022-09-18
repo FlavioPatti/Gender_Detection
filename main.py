@@ -31,18 +31,18 @@ FUSION=0
 SINGLEFOLD= 0
 KFOLD=1
 
-GAUSSIANIZATION= 0
+GAUSSIANIZATION= 1
 ZNORMALIZATION=0
-PCA = 1
+PCA = 0
 LDA = 0
 
-MVG = 1
-NAIVE=1
-MVG_TIED = 1
-NAIVE_TIED =1
+MVG = 0
+NAIVE=0
+MVG_TIED = 0
+NAIVE_TIED =0
 
 LIN_LOGISTIC = 0
-QUAD_LOGISTIC = 0
+QUAD_LOGISTIC = 1
 
 LIN_SVM= 0
 POL_SVM=0
@@ -102,8 +102,8 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
                 print("Z-normalization")
             
         if PCA:
-            DTE=pca.PCA(DTR, DTE, 10)
-            DTR=pca.PCA(DTR, DTR, 10)
+            DTE=pca.PCA(DTR, DTE, 11)
+            DTR=pca.PCA(DTR, DTR, 11)
             print("PCA dimensionality: ",DTR.shape)
 
         if LDA:
@@ -242,12 +242,12 @@ if __name__ == '__main__':
                     for l in lambda_list:
                     
                         print(" linear logistic regression with lamb ", l)
-                        test_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR, LTR, DTE, l)
-                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K, LinearLogisticRegression.LinearLogisticRegression, [l])
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
-                       # listMinDCF.append(DCF_min)
+                        listMinDCF.append(DCF_min)
                         
                         if BALANCING:
                             print(" balancing of the linear logistic regression with lamb ", l)
@@ -262,9 +262,9 @@ if __name__ == '__main__':
                     for l in lambda_list:
 
                         print(" quadratic logistic regression with lamb ", l)
-                        test_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR, LTR, DTE, l)
-                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K, QuadraticLogisticRegression.QuadraticLogisticRegression, [l])
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
                        # listMinDCF.append(DCF_min)
@@ -447,12 +447,12 @@ if __name__ == '__main__':
                     """  
               
             """plot of the minDCF at the end of the computation"""
-            """
+            
             if SHOW_FIGURES_END:
                 lambda_list_plot = [1e-12, 1e-6, 1e-3,1]
                 print("listMinDCF lenght: ", len(listMinDCF))
-                graphics.plotDCFprior(lambda_list_plot,listMinDCF,"lambda Balanced Linear LR")
-            """
+                graphics.plotDCFprior(lambda_list_plot,listMinDCF,"lambda Quadratic Linear LR - PCA, m = 11")
+            
             """
             if SHOW_FIGURES_END:
                 C_list_plot=[1e-5,1e-4,1e-3,1e-2,1e-1]
