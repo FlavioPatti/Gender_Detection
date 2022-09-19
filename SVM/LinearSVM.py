@@ -4,7 +4,7 @@ import scipy.optimize
 import utilities as ut
 
 
-def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
+def train_SVM_linear(DTR, LTR, DTE, C, K, balanced = False, pi1=0.5 ):
     """Implementation of the Linear SVM """
     
     DTREXT = numpy.vstack([DTR, K* numpy.ones((1,DTR.shape[1] ))])
@@ -41,8 +41,8 @@ def train_SVM_linear(DTR, LTR, DTE, C, K, pi_T, balanced = False):
         n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
         pi_emp_T = n_T / N
         pi_emp_F = n_F / N
-        C_T = C * pi_T / pi_emp_T
-        C_F = C * (1-pi_T) / pi_emp_F 
+        C_T = C * pi1 / pi_emp_T
+        C_F = C * (1-pi1) / pi_emp_F 
         for i in range(DTR.shape[1]):
             if LTR[i] == 1:
                 bounds.append((0,C_T))

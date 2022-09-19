@@ -31,7 +31,7 @@ FUSION=0
 SINGLEFOLD= 0
 KFOLD=1
 
-GAUSSIANIZATION= 1
+GAUSSIANIZATION= 0
 ZNORMALIZATION=0
 PCA = 0
 LDA = 0
@@ -41,16 +41,16 @@ NAIVE=0
 MVG_TIED = 0
 NAIVE_TIED =0
 
-LIN_LOGISTIC = 0
+LIN_LOGISTIC = 1
 QUAD_LOGISTIC = 1
 
-LIN_SVM= 0
-POL_SVM=0
-RBF_SVM=0
+LIN_SVM= 1
+POL_SVM=1
+RBF_SVM=1
 
-FULL_GMM= 0
-DIAG_GMM= 0
-TIED_GMM= 0
+FULL_GMM= 1
+DIAG_GMM= 1
+TIED_GMM= 1
 
 def k_fold(D, L, K, algorithm, params=None, seed=0):
     """ Implementation of the k-fold cross validation approach
@@ -247,13 +247,13 @@ if __name__ == '__main__':
                         DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
-                        listMinDCF.append(DCF_min)
+                        #listMinDCF.append(DCF_min)
                         
                         if BALANCING:
                             print(" balancing of the linear logistic regression with lamb ", l)
-                            test_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR, LTR, DTE, l, True, 0.5)
-                            DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                            DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                            all_llrs, all_labels = k_fold(DTR, LTR, K, LinearLogisticRegression.LinearLogisticRegression, [l, True, 0.5])
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
                             #listMinDCF.append(DCF_min)
@@ -282,9 +282,9 @@ if __name__ == '__main__':
                                 
                         if BALANCING:
                             print(" balancing of the quadratic logistic regression with lamb ", l)
-                            test_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR, LTR, DTE, l,True,0.5)
-                            DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                            DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                            all_llrs, all_labels = k_fold(DTR, LTR, K, QuadraticLogisticRegression.QuadraticLogisticRegression, [l, True, 0.5])
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
                            # listMinDCF.append(DCF_min)
@@ -298,17 +298,17 @@ if __name__ == '__main__':
                         for C in C_list:
                             
                             print("SVM Linear: K = %f, C = %f" % (K_,C), "\n")
-                            test_llrs = LinearSVM.train_SVM_linear(DTR, LTR, DTE, C, K_, 0, balanced = False)  
-                            DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                            DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                            all_llrs, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, [C, K_])  
+                            DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
                             
                             if BALANCING:
                                 print("SVM Linear with balancing: K = %f, C = %f" % (K_,C), "\n")
-                                test_llrs = LinearSVM.train_SVM_linear(DTR, LTR, DTE, C, K_, 0.5, balanced= True)  
-                                DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                                DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                                all_llrs, all_labels = k_fold(DTR, LTR, K, LinearSVM.train_SVM_linear, [C, K_,True,0.5])  
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
 
@@ -321,17 +321,17 @@ if __name__ == '__main__':
                             for C in C_list:
                                 
                                 print("SVM Polynomial Kernel: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
-                                test_llrs = KernelSVM.quad_kernel_svm(DTR, LTR, DTE, C, c, 0, K_, "poly", balanced = False)
-                                DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                                DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                                all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.quad_kernel_svm, [C, c,None,K_, "poly"]) 
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
                                 
                                 if BALANCING:
                                     print("SVM Polynomial Kernel with balancing: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
-                                    test_llrs = KernelSVM.quad_kernel_svm(DTR, LTR, DTE, C, c, 0, K_, "poly", balanced = True)
-                                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                                    DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                                    all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.quad_kernel_svm, [C, c,None,K_, "poly", True,0.5]) 
+                                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                                     print("DCF min= ", DCF_min)
                                     print("DCF act = ", DCF_act)
                                     listMinDCF.append(DCF_min)   
@@ -345,18 +345,18 @@ if __name__ == '__main__':
                             for C in C_list:   
                                 
                                 print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
-                                test_llrs = KernelSVM.quad_kernel_svm(DTR, LTR, DTE, C, 0, g, K_, "RBF", balanced = False)
-                                DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                                DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                                all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.quad_kernel_svm, [C, None,g, K_, "RBF"]) 
+                                DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                                 print("DCF min= ", DCF_min)
                                 print("DCF act = ", DCF_act)
                                 #listMinDCF.append(DCF_min)
                                 
                                 if BALANCING:
                                     print("SVM RBF Kernel with balancing: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
-                                    test_llrs1 = KernelSVM.quad_kernel_svm(DTR, LTR, DTE, C, 0, g, K_, "RBF", balanced = True)
-                                    DCF_min =  BayesDecision.compute_min_DCF(test_llrs1, LTE, pi1, Cfn, Cfp)
-                                    DCF_act = BayesDecision.compute_act_DCF(test_llrs1, LTE, pi1, Cfn, Cfp)
+                                    all_llrs, all_labels = k_fold(DTR, LTR, K, KernelSVM.quad_kernel_svm, [C, None,g, K_, "RBF", True, 0.5])
+                                    DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                                    DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                                     print("DCF min= ", DCF_min)
                                     print("DCF act = ", DCF_act)
                                     listMinDCF.append(DCF_min)
@@ -367,9 +367,9 @@ if __name__ == '__main__':
                     for M in M_list:
                         
                         print("GMM version = %s, M = %d, psi = %f" % ("full", M, psi), "\n")
-                        test_llrs= gmm.GMM_classifier(DTR, LTR, DTE, M, psi, "full") 
-                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, [M,psi,"full"]) 
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)  
 
@@ -379,9 +379,9 @@ if __name__ == '__main__':
                     for M in M_list:
                         
                         print("GMM version = %s, M = %d, psi = %f" % ("diagonal", M, psi), "\n")
-                        test_llrs= gmm.GMM_classifier(DTR, LTR, DTE, M, psi, "diagonal") 
-                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, [M,psi,"diagonal"])  
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)          
                 
@@ -391,9 +391,9 @@ if __name__ == '__main__':
                     for M in M_list:
                         
                         print("GMM version = %s, M = %d, psi = %f" % ("tied", M, psi), "\n")
-                        test_llrs= gmm.GMM_classifier(DTR, LTR, DTE, M, psi, "tied") 
-                        DCF_min =  BayesDecision.compute_min_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
-                        DCF_act = BayesDecision.compute_act_DCF(test_llrs, LTE, pi1, Cfn, Cfp)
+                        all_llrs, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, [M,psi,"tied"])  
+                        DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                        DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
                      
