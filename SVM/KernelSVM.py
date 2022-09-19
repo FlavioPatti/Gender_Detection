@@ -18,7 +18,7 @@ def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = k
         return k
     
  
-def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = False):
+def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = False, pi1=0.5):
     """Implementation of the quadratic svm"""
  
     x0 = np.zeros(DTR.shape[1])
@@ -31,8 +31,8 @@ def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced =
     pi_emp_T = n_T / N
     pi_emp_F = n_F / N
     
-    C_T = C * 0.5 / pi_emp_T
-    C_F = C * (1-0.5) / pi_emp_F 
+    C_T = C * pi1 / pi_emp_T
+    C_F = C * (1-pi1) / pi_emp_F 
  
     bounds = [(0,1)] * LTR.size
  
