@@ -24,7 +24,7 @@ SHOW_FIGURES_END = 0
 TRAINING= 1
 TESTING= 0
 
-CALIBRATION=0
+CALIBRATION=1
 BALANCING=0
 FUSION=0
 
@@ -36,23 +36,23 @@ ZNORMALIZATION=0
 PCA = 0
 LDA = 0
 
-MVG = 0
+MVG = 1
 NAIVE=0
 MVG_TIED = 0
 NAIVE_TIED =0
 
-LIN_LOGISTIC = 1
-QUAD_LOGISTIC = 1
+LIN_LOGISTIC = 0
+QUAD_LOGISTIC = 0
 
-LIN_SVM= 1
-POL_SVM=1
-RBF_SVM=1
+LIN_SVM= 0
+POL_SVM=0
+RBF_SVM=0
 
-FULL_GMM= 1
-DIAG_GMM= 1
-TIED_GMM= 1
+FULL_GMM= 0
+DIAG_GMM= 0
+TIED_GMM= 0
 
-def k_fold(D, L, K, algorithm, params=None, seed=0):
+def k_fold(D, L, K, algorithm, params=None, l=0, seed=0):
     """ Implementation of the k-fold cross validation approach
         D is the dataset, L the labels, K the number of folds
         algorithm is the algorithm used as classifier
@@ -122,6 +122,36 @@ def k_fold(D, L, K, algorithm, params=None, seed=0):
 
     all_llr = numpy.hstack(all_llr)
     all_labels = numpy.hstack(all_labels)
+
+    if CALIBRATION:
+        llr_cal = []
+        labels_cal = []
+        idx_numbers = numpy.arange(all_llr.size)
+        idx_partitions = []
+        for i in range(0, all_llr.size, sizePartitions):
+            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+        for i in range(K):
+
+            idx_test = idx_partitions[i]
+            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+            # from lists of lists collapse the elemnts in a single list
+            idx_train = sum(idx_train, [])
+
+            # partition the data and labels using the already partitioned indexes
+            STR = all_llr[idx_train]
+            STE = all_llr[idx_test]
+            LTR = all_labels[idx_train]
+            LTE = all_labels[idx_test]
+            
+            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTR,STE,l,0.5)
+            llr_cal.append(cal_llrs)
+            labels_cal.append(LTE)
+
+        llr_cal = numpy.hstack(llr_cal)
+        labels_cal = numpy.hstack(labels_cal)
+
+        return llr_cal, labels_cal
     
     return all_llr, all_labels
 
@@ -213,7 +243,12 @@ if __name__ == '__main__':
                     DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
-                    
+                    if CALIBRATION:
+                        for l in lambda_list:
+                            print(" calibration with logistic regression with lamb ", l)
+                            all_llrs, all_labels = k_fold(DTR, LTR, K, MultivariateGaussianClassifier.MultivariateGaussianClassifier, None, l)
+                            DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
+                            print("DCF calibrated act = ", DCF_act)
                 if NAIVE:
                     print("naive")
                     all_llrs, all_labels = k_fold(DTR, LTR, K, NaiveBayesClassifier.NaiveBayesClassifier)
