@@ -554,9 +554,9 @@ if __name__ == '__main__':
 
                 if CALIBRATION:
                     for l in lambda_list:
-                        print(" calibration with logistic regression with lamb ", l2)
+                        print(" calibration with logistic regression with lamb ", l)
                         tra_llrs = MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR_TRA, LTR_TRA, DTR_V, l)
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l2,0.5)
+                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR_V,test_llrs,l,0.5)
                         DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
             if NAIVE:
