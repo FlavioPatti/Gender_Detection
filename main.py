@@ -327,8 +327,8 @@ if __name__ == '__main__':
                             
             if LIN_SVM:
                 
-                K_list = [1, 10]
-                C_list = [1e-3, 0.1, 1]
+                K_list = [1]
+                C_list = [1e-3,1e-2, 1e-1, 1]
                 for K_ in K_list:
                     for C in C_list:
                         
@@ -482,12 +482,18 @@ if __name__ == '__main__':
                 """  
             
         """plot of the minDCF at the end of the computation"""
-    
+        """
         if SHOW_FIGURES_END:
             lambda_list_plot = [1e-12, 1e-6, 1e-3,1]
             print("listMinDCF lenght: ", len(listMinDCF))
-            graphics.plotDCFprior(lambda_list_plot,listMinDCF,"lambda Quadratic Linear LR - PCA, m = 11")
-        
+            graphics.plotDCFprior(lambda_list_plot,listMinDCF,"lambda Quadratic LR - Raw")
+        """
+        """
+        if SHOW_FIGURES_END:
+            C_list_plot = [1e-3,1e-2, 1e-1, 1]
+            print("listMinDCF lenght: ", len(listMinDCF))
+            graphics.plotDCFprior(C_list_plot,listMinDCF,"C Linear SVM - Raw")
+        """
         """
         if SHOW_FIGURES_END:
             C_list_plot=[1e-5,1e-4,1e-3,1e-2,1e-1]
@@ -500,7 +506,7 @@ if __name__ == '__main__':
             print("listMinDCF lenght: ", len(listMinDCF))
             graphics.plotDCFg(C_list_plot,listMinDCF,"C Balanced SVM RBF kernel")
         """
-            
+        
     if TESTING:
         print("testing")
         lambda_list = [0, 1e-6, 1e-3, 1]
@@ -635,8 +641,8 @@ if __name__ == '__main__':
                             
             if LIN_SVM:
                 
-                K_list = [1, 10]
-                C_list = [1e-3, 0.1, 1]
+                K_list = [1]
+                C_list = [1e-3,1e-2, 1e-1, 1]
                 for K_ in K_list:
                     for C in C_list:
                         
