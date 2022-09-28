@@ -18,10 +18,8 @@ def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = k
         return k
     
  
-def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = False, pi1=0.5):
-    """Implementation of the quadratic svm"""
- 
-    x0 = np.zeros(DTR.shape[1])
+def kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = False, pi1=0.5):
+    """Implementation of the kernel svm"""
     d = 2
     
     
@@ -54,13 +52,10 @@ def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced =
     Z[LTR == 0] = -1
  
     H = None
- 
     if type == "poly":
-        H = ut.vcol(Z) * ut.vrow(Z) * ((np.dot(DTR.T, DTR) + c) ** d + csi**2)  #type == poly
+        H = ut.vcol(Z) * ut.vrow(Z) * kernel(DTR, DTR, type, d, c, gamma, csi) #type == poly
     elif type == "RBF":
-        dist = ut.vcol((DTR**2).sum(0)) + ut.vrow((DTR**2).sum(0)) - 2 * np.dot(DTR.T, DTR)
-        H = np.exp(-gamma * dist) + csi**2
-        H = ut.vcol(Z) * ut.vrow(Z) * H
+        H = ut.vcol(Z) * ut.vrow(Z) * kernel(DTR, DTR, type, d, c, gamma, csi) #tipe == RBF
  
     def JDual(alpha):
         Ha = np.dot(H, alpha.T)
@@ -72,7 +67,7 @@ def quad_kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced =
         loss, grad = JDual(alpha)
         return loss, grad
     
-    x,_,_ = scipy.optimize.fmin_l_bfgs_b(LDual, x0, factr=0.0, approx_grad=False, bounds=bounds, maxfun=100000, maxiter=100000)
+    x,_,_ = scipy.optimize.fmin_l_bfgs_b(LDual, np.zeros(DTR.shape[1]), factr=0.0, approx_grad=False, bounds=bounds, maxfun=100000, maxiter=100000)
  
     #we are not able to compute the primal solution, but we can still compute the scores like that
     S = np.sum((x*Z).reshape([DTR.shape[1],1]) * kernel(DTR, DTE, type, d, c, gamma, csi), axis=0)
