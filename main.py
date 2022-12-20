@@ -21,22 +21,22 @@ from Preprocessing import Gaussianization
 SHOW_FIGURES_INIT = 0
 SHOW_FIGURES_END = 0
 
-TRAINING= 0
-TESTING= 1
+TRAINING= 1
+TESTING= 0
 
 CALIBRATION=0
 BALANCING=0
-FUSION=0
+FUSION=1
 
 GAUSSIANIZATION= 0
 ZNORMALIZATION=0
 PCA = 0
 LDA = 0
 
-MVG = 1
-NAIVE=1
-MVG_TIED = 1
-NAIVE_TIED =1
+MVG = 0
+NAIVE=0
+MVG_TIED = 0
+NAIVE_TIED =0
 
 LIN_LOGISTIC = 0
 QUAD_LOGISTIC = 0
@@ -49,7 +49,7 @@ FULL_GMM= 0
 DIAG_GMM= 0
 TIED_GMM= 0
 
-def k_fold(D, L, K, algorithm, params=None, l=0, seed=0):
+def k_fold(D, L, K, algorithm, params=None, params_cal=None, seed=0):
     """ Implementation of the k-fold cross validation approach
         D is the dataset, L the labels, K the number of folds
         algorithm is the algorithm used as classifier
@@ -68,7 +68,7 @@ def k_fold(D, L, K, algorithm, params=None, l=0, seed=0):
     for i in range(0, D.shape[1], sizePartitions):
         idx_partitions.append(list(idx_permutation[i:i+sizePartitions]))
 
-    all_llr = []
+    all_llrs = []
     all_labels = []
 
     # for each fold, consider the ith partition in the test set
@@ -114,18 +114,18 @@ def k_fold(D, L, K, algorithm, params=None, l=0, seed=0):
         else:
             llr = algorithm(DTR, LTR, DTE)
         # add scores and labels for this fold in total
-        all_llr.append(llr)
+        all_llrs.append(llr)
         all_labels.append(LTE)
 
-    all_llr = numpy.hstack(all_llr)
+    all_llrs = numpy.hstack(all_llrs)
     all_labels = numpy.hstack(all_labels)
 
-    if CALIBRATION:
+    if params_cal:
         llr_cal = []
         labels_cal = []
-        idx_numbers = numpy.arange(all_llr.size)
+        idx_numbers = numpy.arange(all_llrs.size)
         idx_partitions = []
-        for i in range(0, all_llr.size, sizePartitions):
+        for i in range(0, all_llrs.size, sizePartitions):
             idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
         for i in range(K):
 
@@ -136,12 +136,12 @@ def k_fold(D, L, K, algorithm, params=None, l=0, seed=0):
             idx_train = sum(idx_train, [])
 
             # partition the data and labels using the already partitioned indexes
-            STR = all_llr[idx_train]
-            STE = all_llr[idx_test]
+            STR = all_llrs[idx_train]
+            STE = all_llrs[idx_test]
             LTR = all_labels[idx_train]
             LTE = all_labels[idx_test]
             
-            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTR,STE,l,0.5)
+            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTR,STE,params_cal,0.5)
             llr_cal.append(cal_llrs)
             labels_cal.append(LTE)
 
@@ -150,10 +150,10 @@ def k_fold(D, L, K, algorithm, params=None, l=0, seed=0):
 
         return llr_cal, labels_cal
     
-    return all_llr, all_labels
+    return all_llrs, all_labels
 
 if __name__ == '__main__':
-
+        
     #load data
     DTR, LTR, DTE, LTE = ut.load_train_and_test()
     print("Total sample of training set: ", DTR.shape[1] )
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     DTR1=DTR[:,LTR==1]
     
     # 3 applications: the main balanced and the other two unbalanced 
-    applications = [[0.5,1,1], [0.1,1,1], [0.9,1,1]]
+    applications = [[0.5,1,1]] #, [0.1,1,1], [0.9,1,1]]
 
     """Flag useful to generate graphics of the various attributes of our data set"""
     if SHOW_FIGURES_INIT:
@@ -229,6 +229,7 @@ if __name__ == '__main__':
         sample_class1 = (LTR==1).sum()
         print("Sample of class 1: ", sample_class1, "\n")
 
+
         for app in applications:
             pi1, Cfn, Cfp = app
             print("Application: pi1 = %.1f, Cfn = %d, Cfp = %d" %(pi1, Cfn,Cfp))
@@ -240,7 +241,6 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
-
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -254,7 +254,6 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
-                
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -269,7 +268,6 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
-                
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -283,8 +281,7 @@ if __name__ == '__main__':
                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
-                print("DCF act = ", DCF_act)
-                
+                print("DCF act = ", DCF_act)  
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -508,53 +505,69 @@ if __name__ == '__main__':
                             print("DCF calibrated act = ", DCF_act)
                     
             """Fusion of our best models: Balanced SVM Linear K=1, C=0.1 with PCA=7 and Z-Normalized Quadratic LR with lambda=1e-3"""     
-            """
+            
             if FUSION:
+                #tied GMM m=8 0.031
+                #RBF c=1 g=1e-3 0.039
                 #First model
-                
-                DTE1=pca.PCA(DTR, DTE, 7)
-                DTR_V1=pca.PCA(DTR, DTR_V, 7)
-                DTR1=pca.PCA(DTR, DTR, 7)
-                print("PCA dimensionality: ",DTR.shape)
-                
-                print("SVM Linear with balancing: K = %f, C = %f" % (1,0.1), "\n")
-                test_llrs1 = LinearSVM.train_SVM_linear(DTR1, LTR, DTE1, 0.1, 1, 0.5, balanced= True)  
-                DCF_min =  BayesDecision.compute_min_DCF(test_llrs1, LTE, pi1, Cfn, Cfp)
-                DCF_act = BayesDecision.compute_act_DCF(test_llrs1, LTE, pi1, Cfn, Cfp)
+                psi = 0.01
+                M=8
+                print("GMM version = %s, M = %d, psi = %f" % ("tied", M, psi), "\n")
+                all_llrs1, all_labels = k_fold(DTR, LTR, K, gmm.GMM_classifier, [M,psi,"tied"])  
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs1, all_labels, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs1, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
                     
-                #Second model
+                #Second model  
                 
-                DTE2 = ZNormalization.ZNormalization(DTR,DTE)
-                DTR_V2 = ZNormalization.ZNormalization(DTR,DTR_V)
-                DTR2 = ZNormalization.ZNormalization(DTR,DTR)
-                print("Z-normalization")  
-                
-                print(" quadratic logistic regression with lamb ", 1e-3)
-                test_llrs2 = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR2, LTR, DTE2, 1e-3)
-                DCF_min =  BayesDecision.compute_min_DCF(test_llrs2, LTE, pi1, Cfn, Cfp)
-                DCF_act = BayesDecision.compute_act_DCF(test_llrs2, LTE, pi1, Cfn, Cfp)
-                print("DCF min= ", DCF_min)
-                print("DCF act = ", DCF_act)
+                K_list = [1]
+                C_list = [1]                 
+                g_list = [1e-3]   
+                print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
+                all_llrs2, all_labels = k_fold(DTR, LTR, K, KernelSVM.kernel_svm, [C, None,g, K_, "RBF"]) 
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs2, all_labels, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs2, all_labels, pi1, Cfn, Cfp)
                 
                 
-                test_llrs_stacked=numpy.vstack((test_llrs1,test_llrs2))
+                test_llrs_stacked=numpy.vstack((all_llrs1,all_llrs2))
                 print(test_llrs_stacked.shape)
-                
-                tra_llrs1 = LinearSVM.train_SVM_linear(DTR1, LTR, DTR_V1, 0.1, 1, 0.5, balanced= True) 
-                tra_llrs2 = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR2, LTR, DTR_V2, 1e-3) 
-            
-                tra_llrs_stacked=numpy.vstack((tra_llrs1,tra_llrs2))
-                print(tra_llrs_stacked.shape)
-                print("fusion")
-                fus_llrs= LinearLogisticRegression.BalancedLinearLogisticRegression(tra_llrs_stacked,LTR_V,test_llrs_stacked, 1e-03,0.5)
-                print(fus_llrs.shape)
-                DCF_min =  BayesDecision.compute_min_DCF(fus_llrs, LTE, pi1, Cfn, Cfp)
-                DCF_act = BayesDecision.compute_act_DCF(fus_llrs, LTE, pi1, Cfn, Cfp)
+
+                llr_fus = []
+                labels_fus = []
+                idx_numbers = numpy.arange(test_llrs_stacked.size)
+                idx_partitions = []
+                sizePartitions = int(test_llrs_stacked.shape[1]/K)
+                for i in range(0, test_llrs_stacked.shape[1], sizePartitions):
+                    idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                for i in range(K):
+
+                    idx_test = idx_partitions[i]
+                    idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                    # from lists of lists collapse the elemnts in a single list
+                    idx_train = sum(idx_train, [])
+
+                    # partition the data and labels using the already partitioned indexes
+                    STR = test_llrs_stacked[:,idx_train]
+                    STE = test_llrs_stacked[:,idx_test]
+                    LTR = all_labels[idx_train]
+                    LTE = all_labels[idx_test]
+                    
+                    print("fusion")
+                    fus_llr= LinearLogisticRegression.LinearLogisticRegression(DTR,LTR, DTE, 1e-03, True, 0.5)
+                    print(fus_llr.shape)
+                    llr_fus.append(fus_llr)
+                    labels_fus.append(LTE)
+
+                llr_fus = numpy.hstack(llr_fus)
+                labels_fus = numpy.hstack(labels_fus)
+
+                DCF_min =  BayesDecision.compute_min_DCF(llr_fus, labels_fus, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(llr_fus, labels_fus, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
-                """  
+                  
             
         """plot of the minDCF at the end of the computation"""
         """
