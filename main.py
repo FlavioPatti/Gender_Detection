@@ -521,13 +521,15 @@ if __name__ == '__main__':
                     
                 #Second model  
                 
-                K_list = [1]
-                C_list = [1]                 
-                g_list = [1e-3]   
+                K_ = 1
+                C = 1                 
+                g = 1e-3  
                 print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
                 all_llrs2, all_labels = k_fold(DTR, LTR, K, KernelSVM.kernel_svm, [C, None,g, K_, "RBF"]) 
                 DCF_min =  BayesDecision.compute_min_DCF(all_llrs2, all_labels, pi1, Cfn, Cfp)
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs2, all_labels, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
                 
                 
                 test_llrs_stacked=numpy.vstack((all_llrs1,all_llrs2))
@@ -551,14 +553,14 @@ if __name__ == '__main__':
                     # partition the data and labels using the already partitioned indexes
                     STR = test_llrs_stacked[:,idx_train]
                     STE = test_llrs_stacked[:,idx_test]
-                    LTR = all_labels[idx_train]
-                    LTE = all_labels[idx_test]
+                    LTRS = all_labels[idx_train]
+                    LTES = all_labels[idx_test]
                     
                     print("fusion")
-                    fus_llr= LinearLogisticRegression.LinearLogisticRegression(DTR,LTR, DTE, 1e-03, True, 0.5)
+                    fus_llr= LinearLogisticRegression.LinearLogisticRegression(STR,LTRS, STE, 1e-03, True, 0.5)
                     print(fus_llr.shape)
                     llr_fus.append(fus_llr)
-                    labels_fus.append(LTE)
+                    labels_fus.append(LTES)
 
                 llr_fus = numpy.hstack(llr_fus)
                 labels_fus = numpy.hstack(labels_fus)
