@@ -21,19 +21,19 @@ from Preprocessing import Gaussianization
 SHOW_FIGURES_INIT = 0
 SHOW_FIGURES_END = 0
 
-TRAINING= 1
-TESTING= 0
+TRAINING= 0
+TESTING= 1
 
-CALIBRATION=0
+CALIBRATION=1
 BALANCING=0
-FUSION=1
+FUSION=0
 
 GAUSSIANIZATION= 0
 ZNORMALIZATION=0
 PCA = 0
 LDA = 0
 
-MVG = 0
+MVG = 1
 NAIVE=0
 MVG_TIED = 0
 NAIVE_TIED =0
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     DTR1=DTR[:,LTR==1]
     
     # 3 applications: the main balanced and the other two unbalanced 
-    applications = [[0.5,1,1]] #, [0.1,1,1], [0.9,1,1]]
+    applications = [[0.5,1,1] , [0.1,1,1], [0.9,1,1]]
 
     """Flag useful to generate graphics of the various attributes of our data set"""
     if SHOW_FIGURES_INIT:
@@ -644,9 +644,34 @@ if __name__ == '__main__':
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
-                        tra_llrs = MultivariateGaussianClassifier.MultivariateGaussianClassifier(DTR, LTR, DTR)
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
             if NAIVE:
                 print("naive")
@@ -659,9 +684,34 @@ if __name__ == '__main__':
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
-                        tra_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR, LTR, DTR)
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
 
             if MVG_TIED:
@@ -675,9 +725,34 @@ if __name__ == '__main__':
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
-                        tra_llrs = TiedGaussianClassifier.TiedGaussianClassifier(DTR, LTR, DTR)
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
 
             if NAIVE_TIED:            
@@ -691,9 +766,34 @@ if __name__ == '__main__':
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
-                        tra_llrs = TiedNaiveBayes.TiedNaiveBayes(DTR, LTR, DTR)
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
 
             if LIN_LOGISTIC:
@@ -706,13 +806,38 @@ if __name__ == '__main__':
                     print("DCF act = ", DCF_act)
                     #listMinDCF.append(DCF_min)
                     
-                    if CALIBRATION:
-                        for l2 in lambda_list:
-                            print(" calibration with logistic regression with lamb ", l2)
-                            tra_llrs = LinearLogisticRegression.LinearLogisticRegression(DTR, LTR, DTR, l)
-                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                            print("DCF calibrated act = ", DCF_act)
+                if CALIBRATION:
+                    for l2 in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l2)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l2,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
+                        print("DCF calibrated act = ", DCF_act)
                         
                     if BALANCING:
                         print(" balancing of the linear logistic regression with lamb ", l)
@@ -733,13 +858,38 @@ if __name__ == '__main__':
                     print("DCF act = ", DCF_act)
                     # listMinDCF.append(DCF_min)
                     
-                    if CALIBRATION:
-                        for l2 in lambda_list:
-                            print(" calibration with logistic regression with lamb ", l2)
-                            tra_llrs = QuadraticLogisticRegression.QuadraticLogisticRegression(DTR, LTR, DTR, l)
-                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                            DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                            print("DCF calibrated act = ", DCF_act)
+                if CALIBRATION:
+                    for l2 in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l2)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l2,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
+                        print("DCF calibrated act = ", DCF_act)
                     
                     """
                     #plot bayes error
@@ -776,13 +926,38 @@ if __name__ == '__main__':
                         print("DCF min= ", DCF_min)
                         print("DCF act = ", DCF_act)
                         
-                        if CALIBRATION:
-                            for l2 in lambda_list:
-                                print(" calibration with logistic regression with lamb ", l2)
-                                tra_llrs = LinearSVM.train_SVM_linear(DTR, LTR, DTR, C, K_)
-                                cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                                DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                                print("DCF calibrated act = ", DCF_act)
+                if CALIBRATION:
+                    for l in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
+                        print("DCF calibrated act = ", DCF_act)
                         
                         if BALANCING:
                             print("SVM Linear with balancing: K = %f, C = %f" % (K_,C), "\n")
@@ -807,13 +982,38 @@ if __name__ == '__main__':
                             print("DCF min= ", DCF_min)
                             print("DCF act = ", DCF_act)
                             
-                            if CALIBRATION:
-                                for l2 in lambda_list:
-                                    print(" calibration with logistic regression with lamb ", l2)
-                                    tra_llrs = KernelSVM.kernel_svm(DTR, LTR, DTR, C, c, None, K_, "poly")
-                                    cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                                    DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                                    print("DCF calibrated act = ", DCF_act)
+                if CALIBRATION:
+                    for l in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
+                        print("DCF calibrated act = ", DCF_act)
                             
                             if BALANCING:
                                 print("SVM Polynomial Kernel with balancing: K = %f, C = %f, d=2, c= %f" % (K_,C,c), "\n")
@@ -840,13 +1040,38 @@ if __name__ == '__main__':
                             print("DCF act = ", DCF_act)
                             #listMinDCF.append(DCF_min)
                             
-                            if CALIBRATION:
-                                for l2 in lambda_list:
-                                    print(" calibration with logistic regression with lamb ", l2)
-                                    tra_llrs = KernelSVM.kernel_svm(DTR, LTR, DTR, C, None, g, K_, "RBF")
-                                    cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                                    DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
-                                    print("DCF calibrated act = ", DCF_act)
+                if CALIBRATION:
+                    for l in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
+                        print("DCF calibrated act = ", DCF_act)
                             
                             if BALANCING:
                                 print("SVM RBF Kernel with balancing: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
@@ -870,11 +1095,36 @@ if __name__ == '__main__':
                     print("DCF act = ", DCF_act)  
                     
                 if CALIBRATION:
-                    for l2 in lambda_list:
-                        print(" calibration with logistic regression with lamb ", l2)
-                        tra_llrs = gmm.GMM_classifier(DTR, LTR, DTR, M, psi, "full")
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                    for l in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
                     
 
@@ -891,11 +1141,36 @@ if __name__ == '__main__':
                     print("DCF act = ", DCF_act)         
                     
                 if CALIBRATION:
-                    for l2 in lambda_list:
-                        print(" calibration with logistic regression with lamb ", l2)
-                        tra_llrs = gmm.GMM_classifier(DTR, LTR, DTR, M, psi, "diagonal")
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                    for l in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act) 
             
             if TIED_GMM:
@@ -910,11 +1185,102 @@ if __name__ == '__main__':
                     print("DCF min= ", DCF_min)
                     print("DCF act = ", DCF_act)
                     
-            if CALIBRATION:
-                    for l2 in lambda_list:
-                        print(" calibration with logistic regression with lamb ", l2)
-                        tra_llrs = gmm.GMM_classifier(DTR, LTR, DTR, M, psi, "tied")
-                        cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(tra_llrs,LTR,test_llrs,l2,0.5)
-                        DCF_act = BayesDecision.compute_act_DCF(cal_llrs, LTE, pi1, Cfn, Cfp)
+                if CALIBRATION:
+                    for l in lambda_list:
+                        print(" calibration with logistic regression with lamb ", l)
+                        K=3
+                        sizePartitions=int(test_llrs.size/K)
+                        llr_cal = []
+                        labels_cal = []
+                        idx_numbers = numpy.arange(test_llrs.size)
+                        idx_partitions = []
+                        for i in range(0, test_llrs.size, sizePartitions):
+                            idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                        for i in range(K):
+
+                            idx_test = idx_partitions[i]
+                            idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                            # from lists of lists collapse the elemnts in a single list
+                            idx_train = sum(idx_train, [])
+
+                            # partition the data and labels using the already partitioned indexes
+                            STR = test_llrs[idx_train]
+                            STE = test_llrs[idx_test]
+                            LTRS = LTE[idx_train]
+                            LTES = LTE[idx_test]
+                            
+                            cal_llrs=LinearLogisticRegression.PriWeiLinearLogisticRegression(STR,LTRS,STE,l,0.5)
+                            llr_cal.append(cal_llrs)
+                            labels_cal.append(LTES)
+                        llr_cal = numpy.hstack(llr_cal)
+                        labels_cal = numpy.hstack(labels_cal)
+                        DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
+
+            """Fusion of our best models: Balanced SVM Linear K=1, C=0.1 with PCA=7 and Z-Normalized Quadratic LR with lambda=1e-3"""     
+            
+            if FUSION:
+                #tied GMM m=8 0.031
+                #RBF c=1 g=1e-3 0.039
+                #First model
+                psi = 0.01
+                M=8
+                print("GMM version = %s, M = %d, psi = %f" % ("tied", M, psi), "\n")
+                all_llrs1 = gmm.GMM_classifier(DTR, LTR, DTE, M, psi, "tied")   
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs1, LTE, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs1, LTE, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
+                    
+                #Second model  
+                
+                K_ = 1
+                C = 1                 
+                g = 1e-3  
+                print("SVM RBF Kernel: K = %f, C = %f, g=%f" % (K_,C,g), "\n")
+                all_llrs2 = KernelSVM.kernel_svm(DTR, LTR, DTE, C, None, g, K_, "RBF")
+                DCF_min =  BayesDecision.compute_min_DCF(all_llrs2, LTE, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(all_llrs2, LTE, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
+                
+                
+                test_llrs_stacked=numpy.vstack((all_llrs1,all_llrs2))
+                print(test_llrs_stacked.shape)
+
+                llr_fus = []
+                labels_fus = []
+                idx_numbers = numpy.arange(test_llrs_stacked.size)
+                idx_partitions = []
+                sizePartitions = int(test_llrs_stacked.shape[1]/K)
+                for i in range(0, test_llrs_stacked.shape[1], sizePartitions):
+                    idx_partitions.append(list(idx_numbers[i:i+sizePartitions]))
+                for i in range(K):
+
+                    idx_test = idx_partitions[i]
+                    idx_train = idx_partitions[0:i] + idx_partitions[i+1:]
+
+                    # from lists of lists collapse the elemnts in a single list
+                    idx_train = sum(idx_train, [])
+
+                    # partition the data and labels using the already partitioned indexes
+                    STR = test_llrs_stacked[:,idx_train]
+                    STE = test_llrs_stacked[:,idx_test]
+                    LTRS = LTE[idx_train]
+                    LTES = LTE[idx_test]
+                    
+                    print("fusion")
+                    fus_llr= LinearLogisticRegression.LinearLogisticRegression(STR,LTRS, STE, 1e-03, True, 0.5)
+                    print(fus_llr.shape)
+                    llr_fus.append(fus_llr)
+                    labels_fus.append(LTES)
+
+                llr_fus = numpy.hstack(llr_fus)
+                labels_fus = numpy.hstack(labels_fus)
+
+                DCF_min =  BayesDecision.compute_min_DCF(llr_fus, labels_fus, pi1, Cfn, Cfp)
+                DCF_act = BayesDecision.compute_act_DCF(llr_fus, labels_fus, pi1, Cfn, Cfp)
+                print("DCF min= ", DCF_min)
+                print("DCF act = ", DCF_act)
         
