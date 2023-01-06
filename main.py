@@ -24,16 +24,16 @@ SHOW_FIGURES_END = 0
 TRAINING= 0
 TESTING= 1
 
-CALIBRATION=1
+CALIBRATION=0
 BALANCING=0
-FUSION=0
+FUSION=1
 
 GAUSSIANIZATION= 0
 ZNORMALIZATION=0
 PCA = 0
 LDA = 0
 
-MVG = 1
+MVG = 0
 NAIVE=0
 MVG_TIED = 0
 NAIVE_TIED =0
@@ -537,7 +537,7 @@ if __name__ == '__main__':
 
                 llr_fus = []
                 labels_fus = []
-                idx_numbers = numpy.arange(test_llrs_stacked.size)
+                idx_numbers = numpy.arange(test_llrs_stacked.shape[1])
                 idx_partitions = []
                 sizePartitions = int(test_llrs_stacked.shape[1]/K)
                 for i in range(0, test_llrs_stacked.shape[1], sizePartitions):
@@ -1221,6 +1221,7 @@ if __name__ == '__main__':
             """Fusion of our best models: Balanced SVM Linear K=1, C=0.1 with PCA=7 and Z-Normalized Quadratic LR with lambda=1e-3"""     
             
             if FUSION:
+                K=3
                 #tied GMM m=8 0.031
                 #RBF c=1 g=1e-3 0.039
                 #First model
@@ -1251,7 +1252,7 @@ if __name__ == '__main__':
 
                 llr_fus = []
                 labels_fus = []
-                idx_numbers = numpy.arange(test_llrs_stacked.size)
+                idx_numbers = numpy.arange(test_llrs_stacked.shape[1])
                 idx_partitions = []
                 sizePartitions = int(test_llrs_stacked.shape[1]/K)
                 for i in range(0, test_llrs_stacked.shape[1], sizePartitions):
