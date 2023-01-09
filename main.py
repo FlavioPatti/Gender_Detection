@@ -1,5 +1,4 @@
 import numpy
-
 import utilities as ut
 from Graphics import graphics
 from Preprocessing import pca
@@ -18,36 +17,36 @@ from Bayes_Decision_Model_Evaluation import BayesDecision
 from Preprocessing import Gaussianization
 
 
-SHOW_FIGURES_INIT = 0
-SHOW_FIGURES_END = 0
+SHOW_FIGURES_INIT = False
+SHOW_FIGURES_END = False
 
-TRAINING= 0
-TESTING= 1
+TRAINING = False
+TESTING = False
 
-CALIBRATION=0
-BALANCING=0
-FUSION=1
+CALIBRATION = False
+BALANCING = False
+FUSION = False
 
-GAUSSIANIZATION= 0
-ZNORMALIZATION=0
-PCA = 0
-LDA = 0
+GAUSSIANIZATION = False
+ZNORMALIZATION = False
+PCA = False
+LDA = False
 
-MVG = 0
-NAIVE=0
-MVG_TIED = 0
-NAIVE_TIED =0
+MVG = False
+NAIVE = False
+MVG_TIED = False
+NAIVE_TIED = False
 
-LIN_LOGISTIC = 0
-QUAD_LOGISTIC = 0
+LIN_LOGISTIC = False
+QUAD_LOGISTIC = False
 
-LIN_SVM= 0
-POL_SVM=0
-RBF_SVM=0
+LIN_SVM = False
+POL_SVM = False
+RBF_SVM = False
 
-FULL_GMM= 0
-DIAG_GMM= 0
-TIED_GMM= 0
+FULL_GMM = False
+DIAG_GMM = False
+TIED_GMM = False
 
 def k_fold(D, L, K, algorithm, params=None, params_cal=None, seed=0):
     """ Implementation of the k-fold cross validation approach
@@ -218,10 +217,10 @@ if __name__ == '__main__':
 
     if TRAINING:
         print("training")
-        lambda_list = [0, 1e-6, 1e-3,1]
+        lambda_list = [0, 1e-6, 1e-3, 1]
         if SHOW_FIGURES_END:
             listMinDCF=[]
-        """ We performed training using a k-fold approach with k=3, 'causa data weren't too much"""
+        """ We performed training using a k-fold approach with k=3"""
         K=3
         print("k-fold")
         sample_class0 = (LTR==0).sum()
@@ -241,6 +240,7 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
+                
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -254,6 +254,7 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
+                
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -268,6 +269,7 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)
+                
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -282,6 +284,7 @@ if __name__ == '__main__':
                 DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                 print("DCF min= ", DCF_min)
                 print("DCF act = ", DCF_act)  
+                
                 if CALIBRATION:
                     for l in lambda_list:
                         print(" calibration with logistic regression with lamb ", l)
@@ -358,7 +361,7 @@ if __name__ == '__main__':
             if LIN_SVM:
                 
                 K_list = [1]
-                C_list = [10, 100]
+                C_list = [1e-3, 1e-2, 1e-1, 1]
                 for K_ in K_list:
                     for C in C_list:
                         
@@ -386,8 +389,8 @@ if __name__ == '__main__':
 
             if POL_SVM:        
                 K_list = [1]
-                C_list = [1e-4]       
-                c_list = [10]
+                C_list = [1e-5,1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]       
+                c_list = [0,1,10,30]
                 for K_ in K_list:
                     for c in c_list:  
                         for C in C_list:
@@ -417,8 +420,8 @@ if __name__ == '__main__':
                     
             if RBF_SVM:       
                 K_list = [1]
-                C_list = [1]                 
-                g_list = [1e-3]
+                C_list = [1e-5,1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]                 
+                g_list = [1e-5,1e-4,1e-3,1e-2]
                 for K_ in K_list:
                     for g in g_list:  
                         for C in C_list:   
@@ -504,11 +507,12 @@ if __name__ == '__main__':
                             DCF_act = BayesDecision.compute_act_DCF(all_llrs, all_labels, pi1, Cfn, Cfp)
                             print("DCF calibrated act = ", DCF_act)
                     
-            """Fusion of our best models: Balanced SVM Linear K=1, C=0.1 with PCA=7 and Z-Normalized Quadratic LR with lambda=1e-3"""     
+            """Fusion of our best models: Tied GMM with M=8 and SVM RBF with C=1 g=1e-3"""     
             
             if FUSION:
-                #tied GMM m=8 0.031
-                #RBF c=1 g=1e-3 0.039
+                #Tied GMM m=8 0.031
+                #RBF C=1 g=1e-3 0.039
+                
                 #First model
                 psi = 0.01
                 M=8
@@ -520,7 +524,6 @@ if __name__ == '__main__':
                 print("DCF act = ", DCF_act)
                     
                 #Second model  
-                
                 K_ = 1
                 C = 1                 
                 g = 1e-3  
@@ -673,6 +676,7 @@ if __name__ == '__main__':
                         labels_cal = numpy.hstack(labels_cal)
                         DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
+                        
             if NAIVE:
                 print("naive")
                 test_llrs = NaiveBayesClassifier.NaiveBayesClassifier(DTR, LTR, DTE)
@@ -969,7 +973,7 @@ if __name__ == '__main__':
 
             if POL_SVM:        
                 K_list = [1]
-                C_list = [1e-5,1e-4,1e-3,1e-2,1e-1]       
+                C_list = [1e-5,1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100] 
                 c_list = [0,1,10,30]
                 for K_ in K_list:
                     for c in c_list:  
@@ -1026,7 +1030,7 @@ if __name__ == '__main__':
                     
             if RBF_SVM:       
                 K_list = [1]
-                C_list = [0.001,0.01,0.1,1,10,100,1000]                 
+                C_list = [1e-5,1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]               
                 g_list = [1e-5,1e-4,1e-3,1e-2]
                 for K_ in K_list:
                     for g in g_list:  
@@ -1218,12 +1222,13 @@ if __name__ == '__main__':
                         DCF_act = BayesDecision.compute_act_DCF(llr_cal, labels_cal, pi1, Cfn, Cfp)
                         print("DCF calibrated act = ", DCF_act)
 
-            """Fusion of our best models: Balanced SVM Linear K=1, C=0.1 with PCA=7 and Z-Normalized Quadratic LR with lambda=1e-3"""     
+            """Fusion of our best models: Tied GMM with M=8 and SVM RBF with C=1 g=1e-3"""      
             
             if FUSION:
                 K=3
-                #tied GMM m=8 0.031
+                #Tied GMM m=8 0.031
                 #RBF c=1 g=1e-3 0.039
+                
                 #First model
                 psi = 0.01
                 M=8
@@ -1235,7 +1240,6 @@ if __name__ == '__main__':
                 print("DCF act = ", DCF_act)
                     
                 #Second model  
-                
                 K_ = 1
                 C = 1                 
                 g = 1e-3  
