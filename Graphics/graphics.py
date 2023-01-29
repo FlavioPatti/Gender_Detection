@@ -4,6 +4,7 @@ from Bayes_Decision_Model_Evaluation import BayesDecision
 from numpy.lib.function_base import corrcoef
 
 def plot_hist(D, L, hFea, save_name=""):
+    
     """ Plots histograms given D and L which are training/test data and labels and hFea which are the attributes of the dataset,
         store them in the folder called Generated_figures"""
     
@@ -55,6 +56,7 @@ def plot_heatmap(D, save_name):
     return pearson_matrix
 
 def plotDCFprior(x, y,xlabel):
+    
     """ Plots the minDCF trend when the different applications change, x is the list of lambda, y is the list of minDCF,
         store them in the folder called Generated_figures"""
     
@@ -73,6 +75,7 @@ def plotDCFprior(x, y,xlabel):
     return
 
 def plotDCFc(x, y,xlabel):
+    
     """ Plots the minDCF trend when the different c change, x is the list of C, y is the list of minDCF,
         store them in the folder called Generated_figures"""
     
@@ -92,6 +95,7 @@ def plotDCFc(x, y,xlabel):
     return
 
 def plotDCFg(x, y,xlabel):
+    
     """ Plots the minDCF trend when the different g change, x is the list of C, y is the list of minDCF,
         store them in the folder called Generated_figures"""
     

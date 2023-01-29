@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import utilities as ut
 
-"""Compute the Znormalization of the dataset(centering and scaling to unit variance)"""
+"""Implementation of the Znormalization of the dataset(centering data and scaling to unit variance)"""
 
 def ZNormalization(DTR,DTE):
     mean = DTR.mean(axis=1)

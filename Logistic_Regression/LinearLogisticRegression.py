@@ -46,7 +46,7 @@ def LinearLogisticRegression(DTR,LTR, DTE, lamb, balanced=False, pi1=0.5):
 
 """
 Implementation of the calibration/fusion using the prior weighted logistic regression.
-Forced to use another functions instead of the balanced one beceuse in this case we work with VECTORS of scores,
+Forced to use another functions instead of the balanced one because in this case we work with VECTORS of scores,
 not MATRICES of samples
 """
 def PriWeiLinearLogisticRegression(STR,LTR, STE, lamb, pi1):

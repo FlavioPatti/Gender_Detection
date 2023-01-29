@@ -24,7 +24,7 @@ def compute_sw(D,L):
         SW+=  (L==i).sum() * compute_empirical_cov(D[:,L==i])
     return SW / D.shape[1]
 
-"""Compute the LDA dimensionality reduction"""  
+"""Implementation of the LDA dimensionality reduction"""  
     
 def LDA(DTR, LTR,DTE, m):
     

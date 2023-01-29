@@ -4,8 +4,11 @@ import scipy.optimize
 import utilities as ut
 
 # Compute the kernel dot-product
-def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = ksi^2...... c = [0,1]... gamma = [1.0, 2.0]
-    """Implementation of kernels"""
+def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1):
+    """Implementation of 2 types of kernels:
+    -Polynomial kernel: k(x1, x2) = (x1^T x2 + c)^d
+    -Radial Basic Funcion kernel: k(x1, x2) = e^(-gamma*∥x1- x2∥)^2
+    """
     
     if type == "poly":
         # Polynomial kernel of degree d
@@ -18,31 +21,29 @@ def kernel(x1, x2, type, d = 0, c = 0, gamma = 0, csi = 1): #csi = 1 --> eps = k
         return k
     
  
-def kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = False, pi1=0.5):
+def kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balance_data = False, pi=0.5):
     """Implementation of the kernel svm"""
-    d = 2
     
+    tot_samples = LTR.size #num of total samples
+    num_samples_true = (1*(LTR==1)).sum() #num of total samples from class true
+    num_samples_false = (1*(LTR==0)).sum() #num of total samples from class false
+    pi_emp_true = num_samples_true / tot_samples
+    pi_emp_false = num_samples_false / tot_samples
     
-    N = LTR.size #tot number of samples
-    n_T = (1*(LTR==1)).sum() #num of samples belonging to the true class
-    n_F = (1*(LTR==0)).sum() #num of samples belonging to the false class
-    pi_emp_T = n_T / N
-    pi_emp_F = n_F / N
-    
-    C_T = C * pi1 / pi_emp_T
-    C_F = C * (1-pi1) / pi_emp_F 
+    C_true = C * pi / pi_emp_true
+    C_false = C * (1-pi) / pi_emp_false 
  
     bounds = [(0,1)] * LTR.size
  
-    if balanced == True:
+    if balance_data == True:
         
         for i in range (LTR.size):
             if (LTR[i]==1):
-                bounds[i] = (0,C_T)
+                bounds[i] = (0,C_true)
             else :
-                bounds[i] = (0,C_F)
+                bounds[i] = (0,C_false)
                 
-    if balanced == False:
+    else:
         
         for i in range (LTR.size):
             bounds[i]=(0,C)
@@ -52,6 +53,7 @@ def kernel_svm(DTR, LTR, DTE, C, c=0,gamma=0,csi=0, type="poly", balanced = Fals
     Z[LTR == 0] = -1
  
     H = None
+    d = 2
     if type == "poly":
         H = ut.vcol(Z) * ut.vrow(Z) * kernel(DTR, DTR, type, d, c, gamma, csi) #type == poly
     elif type == "RBF":

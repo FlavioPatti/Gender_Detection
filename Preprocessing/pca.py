@@ -2,7 +2,7 @@ import numpy
 import matplotlib.pyplot as plt
 import utilities as ut
 
-"""Compute the PCA dimensionality reduction"""
+"""Implementation of the PCA dimensionality reduction"""
 
 def PCA(DTR,DTE,m): 
     mu =DTR.mean(1) 

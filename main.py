@@ -87,6 +87,7 @@ def k_fold(D, L, K, algorithm, params=None, params_cal=None, seed=0):
         LTR = L[idx_train]
         LTE = L[idx_test]
 
+        #apply preprocessing to data
         if GAUSSIANIZATION:
             DTE= Gaussianization.Gaussianization(DTR,DTE)
             DTR = Gaussianization.Gaussianization(DTR,DTR)
@@ -98,13 +99,15 @@ def k_fold(D, L, K, algorithm, params=None, params_cal=None, seed=0):
                 print("Z-normalization")
             
         if PCA:
-            DTE=pca.PCA(DTR, DTE, 11)
-            DTR=pca.PCA(DTR, DTR, 11)
+            m_pca = 11
+            DTE=pca.PCA(DTR, DTE, m_pca)
+            DTR=pca.PCA(DTR, DTR, m_pca)
             print("PCA dimensionality: ",DTR.shape)
 
         if LDA:
-            DTE=lda.LDA(DTR, LTR,DTE, 1)
-            DTR=lda.LDA(DTR, LTR,DTR, 1)
+            m_lda = 1
+            DTE=lda.LDA(DTR, LTR,DTE, m_lda)
+            DTR=lda.LDA(DTR, LTR,DTR, m_lda)
             print("LDA dimensionality: ",DTR.shape)
             
         # calculate scores
@@ -155,6 +158,8 @@ if __name__ == '__main__':
         
     #load data
     DTR, LTR, DTE, LTE = ut.load_train_and_test()
+    
+    #print stats
     print("Total sample of training set: ", DTR.shape[1] )
     print("Total sample of test set: ", DTE.shape[1] )
     
@@ -218,8 +223,10 @@ if __name__ == '__main__':
     if TRAINING:
         print("training")
         lambda_list = [0, 1e-6, 1e-3, 1]
+        
         if SHOW_FIGURES_END:
             listMinDCF=[]
+            
         """ We performed training using a k-fold approach with k=3"""
         K=3
         print("k-fold")
@@ -605,13 +612,16 @@ if __name__ == '__main__':
         lambda_list = [0, 1e-6, 1e-3, 1]
         listMinDCF=[]
         
+        #load data
         DTR, LTR, DTE, LTE = ut.load_train_and_test()
          
+        #print stats
         sample_class0 = (LTR==0).sum()
         print("Sample of class 0: ", sample_class0)
         sample_class1 = (LTR==1).sum()
         print("Sample of class 1: ", sample_class1, "\n")
 
+        #apply preprocessing to data
         if GAUSSIANIZATION:
             DTE= Gaussianization.Gaussianization(DTR,DTE)
             DTR = Gaussianization.Gaussianization(DTR,DTR)
@@ -623,13 +633,15 @@ if __name__ == '__main__':
             print("Z-normalization")   
                 
         if PCA:
-            DTE=pca.PCA(DTR, DTE, 11)
-            DTR=pca.PCA(DTR, DTR, 11)
+            m_pca = 11
+            DTE=pca.PCA(DTR, DTE, m_pca)
+            DTR=pca.PCA(DTR, DTR, m_pca)
             print("PCA dimensionality: ",DTR.shape)
 
         if LDA:
-            DTE=lda.LDA(DTR, LTR,DTE, 1)
-            DTR=lda.LDA(DTR, LTR,DTR, 1)
+            m_lda = 1
+            DTE=lda.LDA(DTR, LTR,DTE, m_lda)
+            DTR=lda.LDA(DTR, LTR,DTR, m_lda)
             print("LDA dimensionality: ",DTR.shape)
 
         for app in applications:
@@ -1030,7 +1042,8 @@ if __name__ == '__main__':
                     
             if RBF_SVM:       
                 K_list = [1]
-                C_list = [1e-5,1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]               
+                C_list = [1]   
+                C_list = [1e-5,1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]              
                 g_list = [1e-5,1e-4,1e-3,1e-2]
                 for K_ in K_list:
                     for g in g_list:  

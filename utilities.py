@@ -8,6 +8,14 @@ def vrow(v):
     return v.reshape((1,v.size))
 
 def load_train_and_test():  
+    """load training set(Train.txt) and testing set(Test.txt) from Data folder
+        returns:
+        DTR = Dataset for training set
+        LTR = Labels for training set
+        DTE = Dataset for testing set
+        LTE = Labels for testing set
+    """
+    
     DTR = []
     LTR = []
     f=open('data/Train.txt', encoding="ISO-8859-1")
@@ -28,7 +36,6 @@ def load_train_and_test():
     f.close()
     return numpy.hstack(DTR), numpy.array(LTR, dtype=numpy.int32), numpy.hstack(DTE), numpy.array(LTE, dtype=numpy.int32)  
 
-"""USED ONLY IN THE TESTING PART! We decided, based on the quantity of data, to use a k-fold approach for training purposes"""
 def split_db_2to1(D, L, param, seed=0):
     """ Split the dataset in two parts based on the param,
         first part will be used for model training, second part for testing
